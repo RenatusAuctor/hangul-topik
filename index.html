@@ -1,0 +1,973 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>한글에서 토픽까지</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Shippori+Mincho:wght@500;700&family=IBM+Plex+Sans+JP:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column, sticky 5-step rail; each step = intro + specimen grid of tappable cards. Mobile-first: 2-col cards, 44px touch targets. Celadon ink + cinnabar for 받침. */
+:root{
+  --paper:#F2F5F3; --surface:#FFFFFF; --ink:#17201E; --muted:#56635F; --line:#D5DEDA;
+  --celadon:#2C6A60; --celadon-soft:#DDEBE7; --cinnabar:#B4412D; --cinnabar-soft:#F6E2DC;
+  --amber:#8A6414; --amber-soft:#F3EAD3;
+  --f-display:"Gowun Batang","Shippori Mincho","Noto Serif KR","Yu Mincho",serif;
+  --f-body:"IBM Plex Sans JP","IBM Plex Sans KR","Hiragino Sans","Apple SD Gothic Neo","Yu Gothic","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --r:10px; --tap:44px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#111715; --surface:#19211F; --ink:#E4ECE9; --muted:#9AA9A5; --line:#2B3633;
+  --celadon:#82C4B7; --celadon-soft:#1D332E; --cinnabar:#EC8A74; --cinnabar-soft:#3A231D;
+  --amber:#E2BE6A; --amber-soft:#342B17; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111715; --surface:#19211F; --ink:#E4ECE9; --muted:#9AA9A5; --line:#2B3633;
+  --celadon:#82C4B7; --celadon-soft:#1D332E; --cinnabar:#EC8A74; --cinnabar-soft:#3A231D;
+  --amber:#E2BE6A; --amber-soft:#342B17; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.7;overflow-wrap:anywhere;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+.ko{word-break:keep-all}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;text-wrap:balance;line-height:1.3;margin:0}
+p{margin:0}
+button,select,input{font:inherit;color:inherit}
+button{touch-action:manipulation}
+:focus-visible{outline:2px solid var(--celadon);outline-offset:2px}
+
+/* hero */
+.hero{padding-block:48px 36px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:36px;align-items:center}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--celadon)}
+.hero h1{font-size:clamp(32px,6vw,54px);margin-top:10px}
+.hero h1 small{display:block;font-size:.42em;color:var(--muted);font-weight:500;margin-top:6px}
+.hero .lede{margin-top:16px;color:var(--muted);max-width:34em}
+.anatomy{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;max-width:320px;justify-self:center;width:100%}
+.anatomy .cell{border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 6px;gap:2px}
+.anatomy .g{font-family:var(--f-display);font-size:58px;line-height:1}
+.anatomy small{font-size:12px;color:var(--muted);text-align:center;line-height:1.4}
+.anatomy .c1{background:var(--celadon-soft);color:var(--celadon)}
+.anatomy .c2{background:var(--amber-soft);color:var(--amber)}
+.anatomy .c3{grid-column:1/3;background:var(--cinnabar-soft);color:var(--cinnabar)}
+.anatomy .eq{grid-column:1/3;text-align:center;font-size:14px;color:var(--muted);padding-top:4px}
+.anatomy .eq b{font-family:var(--f-display);font-size:28px;color:var(--ink);vertical-align:middle;margin-left:6px}
+
+/* step rail */
+.rail{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--paper) 92%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.rail ol{list-style:none;margin:0 auto;display:flex;gap:4px;overflow-x:auto;padding-block:8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+.rail ol::-webkit-scrollbar{display:none}
+.rail li{scroll-snap-align:start;flex:none}
+.rail a{display:flex;align-items:center;gap:8px;white-space:nowrap;text-decoration:none;color:var(--muted);min-height:var(--tap);padding:0 14px;border-radius:999px;font-size:14px;font-weight:500}
+.rail a span{font-family:var(--f-mono);font-size:12px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line)}
+.rail a.on{background:var(--ink);color:var(--paper)}
+.rail a.on span{border-color:transparent;background:var(--paper);color:var(--ink)}
+
+section.step{padding-block:56px 16px;scroll-margin-top:64px}
+.step-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:start;margin-bottom:24px}
+.step-no{font-family:var(--f-display);font-size:60px;line-height:.9;color:var(--celadon)}
+.step-head h2{font-size:clamp(24px,4vw,34px)}
+.step-head h2 .ko{font-size:.7em;color:var(--muted);font-weight:500;margin-left:6px}
+.step-head p{color:var(--muted);margin-top:8px;max-width:40em}
+h3{font-size:20px;margin:36px 0 12px}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;font-size:15px;max-width:48em}
+.note b{color:var(--celadon)}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:10px;margin-top:14px}
+.notes .note{max-width:none}
+.jp-tip{background:var(--amber-soft);border-color:transparent}
+.jp-tip b{color:var(--amber)}
+.jp-tip .lab{display:inline-block;font-size:11px;letter-spacing:.06em;color:var(--amber);border:1px solid currentColor;border-radius:4px;padding:0 5px;margin-right:6px;vertical-align:1px}
+
+/* specimen cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 12px 10px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:3px;min-width:0;transition:border-color .15s}
+@media (hover:hover){.card:hover{border-color:var(--celadon)}}
+.card:active{transform:scale(.98)}
+.card.playing{border-color:var(--celadon);box-shadow:0 0 0 3px var(--celadon-soft)}
+.card .top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
+.card .glyph{font-family:var(--f-display);font-size:52px;line-height:1.05}
+.card .tag{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 5px;white-space:nowrap}
+.card .name{font-weight:600;font-size:15px}
+.card .rom{font-size:13px;color:var(--celadon);display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
+.card .rom .r{font-family:var(--f-mono)}
+.card .rom .kana{font-weight:600}
+.card .hint{font-size:12px;color:var(--muted);line-height:1.5}
+.card .ex{font-size:14px;color:var(--muted);border-top:1px dashed var(--line);padding-top:6px;margin-top:4px;line-height:1.5}
+.card .ex b{color:var(--ink);font-weight:600;font-family:var(--f-display);font-size:16px;margin-right:4px}
+.card .formula{font-family:var(--f-mono);font-size:12px;color:var(--amber);white-space:nowrap}
+.card.dbl .glyph{color:var(--celadon)}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+tr:last-child td{border-bottom:0}
+th{font-size:12px;letter-spacing:.04em;color:var(--muted);font-weight:500;background:color-mix(in srgb,var(--line) 30%,var(--surface));white-space:nowrap}
+.big{font-family:var(--f-display);font-size:24px;white-space:nowrap}
+.say{background:none;border:1px solid var(--line);border-radius:8px;min-height:var(--tap);padding:4px 10px;cursor:pointer;font-family:var(--f-display);font-size:18px;margin:2px;display:inline-flex;align-items:center;gap:4px}
+@media (hover:hover){.say:hover{border-color:var(--celadon);color:var(--celadon)}}
+.say:active{background:var(--celadon-soft)}
+.say small{font-family:var(--f-body);font-size:12px;color:var(--muted)}
+.bat{color:var(--cinnabar)}
+.rep{display:inline-grid;place-items:center;min-width:44px;height:44px;border-radius:8px;background:var(--cinnabar-soft);color:var(--cinnabar);font-family:var(--f-display);font-size:24px;font-weight:700}
+.jp{font-size:14px}
+.jp em{font-style:normal;color:var(--cinnabar);font-weight:600}
+
+/* stacked tables on phones */
+@media (max-width:600px){
+  .tbl-wrap.stack{overflow:visible;border:0;background:none}
+  .stack table,.stack tbody,.stack tr,.stack td{display:block;width:100%}
+  .stack thead{display:none}
+  .stack tr{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;margin-bottom:8px}
+  .stack td{border:0;padding:4px 0}
+  .stack td[data-l]::before{content:attr(data-l);display:block;font-size:11px;color:var(--muted);letter-spacing:.04em}
+}
+
+/* composer */
+.composer{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+.composer .sel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.composer label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
+.composer select{font-family:var(--f-display);font-size:22px;min-height:var(--tap);padding:4px 8px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);width:100%}
+.composer .out{display:flex;flex-direction:column;align-items:center;gap:6px}
+.composer .syl{font-family:var(--f-display);font-size:96px;line-height:1;min-width:120px;text-align:center}
+.composer .code{font-family:var(--f-mono);font-size:12px;color:var(--muted);text-align:center}
+.btn{border:1px solid var(--ink);background:var(--ink);color:var(--paper);border-radius:8px;min-height:var(--tap);padding:0 16px;cursor:pointer;font-size:15px;font-weight:500}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+
+/* vocab */
+.vtools{display:flex;flex-wrap:wrap;gap:0 16px;align-items:center;margin-bottom:10px}
+.vtools input[type=search]{flex:1 1 100%;min-width:0;font-size:16px;min-height:var(--tap);padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);margin-bottom:4px}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);cursor:pointer;min-height:var(--tap)}
+.chk input{width:20px;height:20px;accent-color:var(--celadon)}
+.chips{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+@media (min-width:721px){.chips{flex-wrap:wrap;overflow:visible}}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;min-height:38px;padding:0 13px;font-size:14px;cursor:pointer;white-space:nowrap}
+.chip i{font-style:normal;font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-left:4px}
+.chip.on{background:var(--celadon);border-color:var(--celadon);color:var(--paper)}
+.chip.on i{color:inherit;opacity:.8}
+.vstat{font-size:14px;color:var(--muted);margin-bottom:10px;font-variant-numeric:tabular-nums}
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.w{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 8px 8px 12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 8px;align-items:center}
+.w .k{font-family:var(--f-display);font-size:20px;font-weight:700;background:none;border:0;padding:4px 0;text-align:left;cursor:pointer;min-width:0;word-break:keep-all}
+.w .m{grid-column:1/2;font-size:14px;color:var(--muted);transition:filter .2s;line-height:1.5}
+.w .hj{display:inline-block;font-size:11px;color:var(--amber);background:var(--amber-soft);border-radius:4px;padding:0 5px;margin-left:4px;font-family:"Shippori Mincho",var(--f-display);vertical-align:1px}
+.w .t{grid-column:1/2;font-size:11px;color:var(--celadon);margin-top:2px}
+.w .done{grid-row:1/4;grid-column:2;background:none;border:1px solid var(--line);border-radius:8px;width:var(--tap);height:var(--tap);cursor:pointer;font-size:16px;color:transparent}
+.w.known{background:var(--celadon-soft);border-color:transparent}
+.w.known .done{background:var(--celadon);border-color:var(--celadon);color:var(--paper)}
+.hide-mean .w .m{filter:blur(6px);cursor:pointer;user-select:none;-webkit-user-select:none}
+.hide-mean .w .m.show{filter:none}
+.more{display:flex;justify-content:center;margin-top:16px}
+
+.flash{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;background:var(--ink);color:var(--paper);border-radius:14px;padding:20px 22px;margin-bottom:20px}
+.flash .fw{font-family:var(--f-display);font-size:42px;font-weight:700;line-height:1.15;word-break:keep-all}
+.flash .fm{font-size:16px;opacity:.88;min-height:1.7em;margin-top:6px}
+.flash .fl{font-size:12px;opacity:.65}
+.flash .acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.flash .btn{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+.flash .btn.ghost{background:transparent;color:var(--paper);border-color:color-mix(in srgb,var(--paper) 40%,transparent)}
+
+.tts-warn{font-size:13px;color:var(--cinnabar);margin-top:10px}
+footer{padding-block:40px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);margin-top:40px}
+
+@media (max-width:720px){
+  body{font-size:15px}
+  .hero{grid-template-columns:1fr;padding-block:28px 24px;gap:22px}
+  .anatomy{max-width:none;grid-template-columns:1fr 1fr 1fr}
+  .anatomy .c3{grid-column:auto}
+  .anatomy .eq{grid-column:1/4}
+  .anatomy .g{font-size:46px}
+  section.step{padding-block:40px 8px}
+  .step-no{font-size:40px}
+  .step-head{gap:12px;margin-bottom:18px}
+  .step-head h2 .ko{display:block;margin:2px 0 0}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .card .glyph{font-size:44px}
+  .composer{grid-template-columns:1fr;padding:16px}
+  .composer .out{order:-1}
+  .composer .syl{font-size:80px}
+  .row .btn{flex:1}
+  .flash{grid-template-columns:1fr;padding:18px}
+  .flash .fw{font-size:36px}
+  .flash .acts{display:grid;grid-template-columns:1fr 1fr 1.4fr}
+  .vgrid{grid-template-columns:1fr}
+}
+/* quiz */
+.quiz-jump{display:inline-flex;align-items:center;min-height:36px;margin-top:10px;padding:0 12px;border-radius:999px;border:1px solid var(--celadon);color:var(--celadon);text-decoration:none;font-size:14px;font-weight:500}
+.quiz{margin-top:40px;background:var(--surface);border:2px solid var(--celadon);border-radius:16px;padding:22px;scroll-margin-top:64px}
+#topik .quiz{margin:0 0 22px}
+.quiz .qh{display:flex;justify-content:space-between;align-items:baseline;gap:6px 12px;flex-wrap:wrap}
+.quiz .qt{font-family:var(--f-display);font-size:22px;font-weight:700}
+.quiz .qmeta{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.quiz .qdesc{margin-top:8px;color:var(--muted)}
+.quiz .qbest{margin-top:8px;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.badge{font-size:12px;border-radius:999px;padding:1px 10px;font-weight:600}
+.badge.ok{background:var(--celadon);color:var(--paper)}
+.quiz .bar{height:6px;border-radius:3px;background:var(--line);margin:12px 0 16px;overflow:hidden}
+.quiz .bar i{display:block;height:100%;background:var(--celadon);transition:width .3s}
+.quiz .qsub{font-size:14px;color:var(--muted);margin-top:4px}
+.quiz .qp{font-size:24px;font-weight:600;margin:6px 0 16px;line-height:1.45}
+.quiz .qp.ko{font-family:var(--f-display);font-size:clamp(34px,11vw,60px);line-height:1.15;word-break:keep-all}
+.quiz .listen{margin:10px 0 16px}
+.quiz .choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quiz .choices.long{grid-template-columns:1fr}
+@media (min-width:721px){.quiz .choices.long{grid-template-columns:1fr 1fr}}
+.quiz .ch{min-height:60px;border:1px solid var(--line);background:var(--paper);border-radius:10px;font-size:17px;padding:8px 12px;cursor:pointer;line-height:1.4}
+.quiz .ch.ko{font-family:var(--f-display);font-size:24px;font-weight:700}
+@media (hover:hover){.quiz .ch:not(:disabled):hover{border-color:var(--celadon)}}
+.quiz .ch.ok{background:var(--celadon);border-color:var(--celadon);color:var(--paper)}
+.quiz .ch.ng{background:var(--cinnabar-soft);border-color:var(--cinnabar);color:var(--cinnabar)}
+.quiz .ch:disabled{cursor:default}
+.quiz .ch:disabled:not(.ok):not(.ng){opacity:.55}
+.quiz .fb{min-height:1.7em;margin-top:14px;font-size:15px}
+.quiz .fb b.ok{color:var(--celadon)}
+.quiz .fb b.ng{color:var(--cinnabar)}
+.quiz .ex{color:var(--muted)}
+.quiz .result{margin:14px 0;padding:18px;border-radius:12px}
+.quiz .result.pass{background:var(--celadon-soft)}
+.quiz .result.fail{background:var(--cinnabar-soft)}
+.quiz .score{font-family:var(--f-display);font-size:52px;font-weight:700;line-height:1}
+.quiz .result.pass .score{color:var(--celadon)}
+.quiz .result.fail .score{color:var(--cinnabar)}
+.quiz .rmsg{margin-top:8px}
+.quiz ul.wrong{margin:6px 0 0;padding-left:1.2em;font-size:15px;display:grid;gap:6px}
+.quiz ul.wrong b{font-family:var(--f-display)}
+.quiz ul.wrong .ex{display:block;font-size:13px}
+.lock-panel{display:none;gap:16px;align-items:flex-start;background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:22px}
+.lock-panel .lock-ic{width:52px;height:52px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--celadon-soft);color:var(--celadon)}
+.lock-panel .lt{font-weight:600;font-size:17px;margin-bottom:4px}
+section.locked .step-body{display:none}
+section.locked .lock-panel{display:flex}
+section.locked .quiz-jump{display:none}
+.rail a.locked{opacity:.6}
+.rail a.done span{background:var(--celadon);border-color:var(--celadon);color:var(--paper)}
+.rail a.on.done span{background:var(--paper);color:var(--celadon)}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.btn.sm{min-height:40px;font-size:13px;padding:0 12px}
+/* learner card */
+.learner{margin-top:20px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;max-width:30em;transition:box-shadow .3s}
+.learner.attn{box-shadow:0 0 0 4px var(--amber-soft);border-color:var(--amber)}
+.learner label{font-size:14px;font-weight:600}
+.nick-row{display:flex;gap:8px;margin-top:8px}
+.nick-row input{flex:1;min-width:0;font-size:16px;min-height:var(--tap);padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.hello{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:600}
+.sync{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.55}
+.sync.ok{color:var(--celadon)}
+.sync.warn{color:var(--amber)}
+.linkbtn{background:none;border:0;padding:8px 0 0;color:var(--celadon);font-size:13px;text-decoration:underline;cursor:pointer;min-height:36px}
+#restoreBox{margin-top:6px}
+#restoreBox label{font-size:13px}
+.idrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-top:8px;font-size:13px;color:var(--muted)}
+.idrow b,.idv{font-family:var(--f-mono);font-size:15px;color:var(--ink);letter-spacing:.02em}
+.report{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+.idline{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:4px}
+.idline .idv{font-size:20px}
+.smallnote{font-size:13px;color:var(--muted);margin-top:8px}
+a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+/* teacher panel */
+.tpanel{padding-block:40px 0}
+.tpanel h3{margin:0 0 6px}
+.tpanel h3 small{font-family:var(--f-body);font-size:13px;color:var(--muted);font-weight:400;margin-left:8px}
+.tnote{font-size:13px;color:var(--muted);margin-bottom:12px}
+.pbar{display:inline-flex;gap:3px;vertical-align:middle}
+.pbar i{width:14px;height:8px;border-radius:2px;background:var(--line)}
+.pbar i.on{background:var(--celadon)}
+/* LINE */
+.line-fab{position:fixed;z-index:6;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));display:inline-flex;align-items:center;min-height:48px;padding:0 18px;border-radius:999px;background:#06C755;color:#fff;font-weight:600;font-size:15px;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.line-fab.unset{background:var(--surface);color:var(--muted);border:1px dashed var(--line);box-shadow:none;cursor:default}
+.foot-line{margin-bottom:12px}
+.foot-line a{color:var(--celadon);font-weight:600}
+@media (max-width:720px){
+  main.wrap{padding-bottom:72px}
+  .learner{max-width:none}
+  .quiz{padding:16px;border-radius:14px}
+  .quiz .row .btn{flex:1 1 auto}
+  .lock-panel{flex-direction:column;padding:18px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+
+<header class="wrap hero">
+  <div>
+    <div class="eyebrow">日本語話者のための韓国語入門</div>
+    <h1>ハングルからTOPIKまで<small class="ko">한글에서 토픽까지</small></h1>
+    <p class="lede">基本母音10個と子音14個から始めて、複合母音・パッチムを経て、TOPIK I レベルの単語まで順番に学びます。文字・例・単語をタップすると音声が流れます。</p>
+    <div class="learner" id="learner">
+      <div id="nickForm">
+        <label for="nick">ニックネームを入力してください</label>
+        <div class="nick-row"><input id="nick" maxlength="20" placeholder="例：ゆうき" autocomplete="nickname" enterkeyhint="done"><button class="btn" id="nickSave" type="button">はじめる</button></div>
+        <button class="linkbtn" id="restoreOpen" type="button">前の記録を引き継ぐ（復元IDを持っている人）</button>
+        <div id="restoreBox" hidden>
+          <label for="rid">復元ID</label>
+          <div class="nick-row"><input id="rid" placeholder="例：ゆうき-K7Q2M" autocomplete="off" enterkeyhint="done"><button class="btn" id="ridGo" type="button">復元</button></div>
+        </div>
+      </div>
+      <div id="nickShow" hidden>
+        <div class="hello"><span id="nickHello"></span><button class="btn ghost sm" id="nickChange" type="button">変更</button></div>
+        <div class="idrow">復元ID <b id="myId"></b><button class="btn ghost sm" id="idCopy" type="button">コピー</button><a class="btn ghost sm" id="idLine" target="_blank" rel="noopener">LINEで自分に送る</a></div>
+      </div>
+      <p class="sync" id="syncState">ニックネームを入れると、学習の記録がその名前で保存されます。</p>
+    </div>
+    <p class="tts-warn" id="ttsWarn" hidden>このブラウザでは韓国語の音声が使えないため、音が出ない場合があります。</p>
+  </div>
+  <div class="anatomy" aria-label="一文字の構造：ㅎ + ㅏ + ㄴ = 한">
+    <div class="cell c1"><span class="g">ㅎ</span><small>初声<br>子音</small></div>
+    <div class="cell c2"><span class="g">ㅏ</span><small>中声<br>母音</small></div>
+    <div class="cell c3"><span class="g">ㄴ</span><small>終声<br>パッチム</small></div>
+    <div class="eq">ㅎ(h) + ㅏ(a) + ㄴ(n) =<b>한</b></div>
+  </div>
+</header>
+
+<nav class="rail" aria-label="学習ステップ">
+  <ol class="wrap" id="rail">
+    <li><a href="#vowels"><span>1</span>母音</a></li>
+    <li><a href="#consonants"><span>2</span>子音</a></li>
+    <li><a href="#compound"><span>3</span>複合母音</a></li>
+    <li><a href="#batchim"><span>4</span>パッチム</a></li>
+    <li><a href="#topik"><span>5</span>TOPIK I 単語</a></li>
+  </ol>
+</nav>
+
+<main class="wrap">
+
+<!-- 1 母音 -->
+<section class="step" id="vowels">
+  <div class="step-head">
+    <div class="step-no">1</div>
+    <div>
+      <h2>基本母音 10個<span class="ko">모음</span></h2>
+      <p>母音は天（·）・地（ㅡ）・人（ㅣ）の形から作られました。母音は単独では書けないので、音のない <b>ㅇ</b> を前につけて書きます。ㅏ → 아</p>
+    </div>
+  </div>
+  <div class="grid" id="vowelGrid"></div>
+  <div class="notes">
+    <div class="note jp-tip"><span class="lab">日本人の注意点</span><b>ㅓ と ㅗ</b> はどちらも日本語の「オ」に聞こえます。ㅓ は口を縦に大きく開け、ㅗ は唇を丸く突き出します。</div>
+    <div class="note jp-tip"><span class="lab">日本人の注意点</span><b>ㅡ と ㅜ</b> はどちらも「ウ」に近い音です。ㅡ は「イ」の口のまま「ウ」、ㅜ は唇をしっかり突き出します。</div>
+    <div class="note"><b>縦の母音</b> ㅏ ㅑ ㅓ ㅕ ㅣ は子音の<b>右</b>に書きます（가, 너, 이）。<b>横の母音</b> ㅗ ㅛ ㅜ ㅠ ㅡ は子音の<b>下</b>に書きます（고, 누, 으）。</div>
+    <div class="note"><b>短い線が2本</b>になるとヤ行の音になります。ㅏ→ㅑ（ア→ヤ）、ㅓ→ㅕ、ㅗ→ㅛ、ㅜ→ㅠ</div>
+  </div>
+</section>
+
+<!-- 2 子音 -->
+<section class="step" id="consonants">
+  <div class="step-head">
+    <div class="step-no">2</div>
+    <div>
+      <h2>基本子音 14個と濃音 5個<span class="ko">자음</span></h2>
+      <p>基本の ㄱ ㄴ ㅁ ㅅ ㅇ は発音するときの口や舌の形を表しています。ほかの子音は線を足したり、同じ字を重ねたりして作ります。カードをタップすると子音の名前を読み上げます。</p>
+    </div>
+  </div>
+  <div class="grid" id="consGrid"></div>
+  <h3>濃音（쌍자음）</h3>
+  <div class="grid" id="dblGrid"></div>
+  <h3>平音・激音・濃音を比べる</h3>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>発音する場所</th><th>平音</th><th>激音（息を強く）</th><th>濃音（息を出さない）</th></tr></thead>
+    <tbody id="triadBody"></tbody>
+  </table></div>
+  <div class="notes">
+    <div class="note jp-tip"><span class="lab">日本人の注意点</span><b>濁音の区別はありません。</b> ㄱ ㄷ ㅂ ㅈ は語頭では清音（カ・タ・パ・チャ）、母音の間では濁音（ガ・ダ・バ・ジャ）になります。고기 は「コギ」。</div>
+    <div class="note jp-tip"><span class="lab">日本人の注意点</span><b>濃音</b>は小さい「っ」の直後の音です。「いっかい」の「っか」が 까、「やった」の「った」が 따 に近い音です。</div>
+    <div class="note"><b>激音</b> ㅋ ㅌ ㅍ ㅊ は口の前に手を当てると息を強く感じる音です。ティッシュを口の前にかざすと揺れます。</div>
+    <div class="note"><b>形の由来</b> ㄱ 舌の根が喉をふさぐ形 · ㄴ 舌先が歯ぐきにつく形 · ㅁ 口の形 · ㅅ 歯の形 · ㅇ 喉の形</div>
+  </div>
+</section>
+
+<!-- 3 複合母音 -->
+<section class="step" id="compound">
+  <div class="step-head">
+    <div class="step-no">3</div>
+    <div>
+      <h2>複合母音 11個<span class="ko">복합모음</span></h2>
+      <p>基本母音を2つ組み合わせて作ります。カード右上の式は、どの母音を合わせたかを示しています。</p>
+    </div>
+  </div>
+  <div class="grid" id="compGrid"></div>
+  <div class="notes">
+    <div class="note"><b>ㅐ と ㅔ</b> 今のソウルの言葉ではほぼ同じ「エ」です。개（犬）と 게（カニ）は文字で区別して覚えましょう。</div>
+    <div class="note"><b>ㅙ・ㅚ・ㅞ</b> 3つともほぼ「ウェ」と発音します。왜、회사、웨이터</div>
+    <div class="note"><b>ㅢ の読み方</b> 語頭では [의]（의사）、子音の後では [이]（희망→히망）、助詞「の」の 의 は [에]（우리의→우리에）</div>
+  </div>
+</section>
+
+<!-- 4 パッチム -->
+<section class="step" id="batchim">
+  <div class="step-head">
+    <div class="step-no">4</div>
+    <div>
+      <h2>パッチム（終声）<span class="ko">받침</span></h2>
+      <p>文字の下に来る子音をパッチムといいます。使える文字はたくさんありますが、音は <b>7種類</b> だけです。ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅇ</p>
+    </div>
+  </div>
+  <div class="note jp-tip" style="margin-bottom:14px"><span class="lab">日本語で言うと</span>日本語の「ん」は実は3種類あります。<b>あんない</b>の「ん」が ㄴ、<b>さんま</b>の「ん」が ㅁ、<b>りんご</b>の「ん」が ㅇ です。小さい「っ」も、後ろの音によって ㄱ・ㄷ・ㅂ に分かれます。</div>
+  <h3 style="margin-top:0">7つの代表音</h3>
+  <div class="tbl-wrap stack"><table>
+    <thead><tr><th>代表音</th><th>パッチムの文字</th><th>日本語で言うと</th><th>例（タップで音声）</th></tr></thead>
+    <tbody id="repBody"></tbody>
+  </table></div>
+
+  <h3>二重パッチム（겹받침）</h3>
+  <p class="note" style="margin-bottom:12px">ほとんどは<b>左</b>の子音で読み、ㄺ ㄻ ㄿ は<b>右</b>の子音で読みます。後ろに母音が来ると両方とも発音します。닭이 [달기]、앉아요 [안자요]</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>二重パッチム</th><th>読む音</th><th>例 → 実際の発音</th></tr></thead>
+    <tbody id="dblBatBody"></tbody>
+  </table></div>
+
+  <h3>パッチムの発音ルール</h3>
+  <div class="tbl-wrap stack"><table>
+    <thead><tr><th>ルール</th><th>説明</th><th>例 → 実際の発音</th></tr></thead>
+    <tbody id="ruleBody"></tbody>
+  </table></div>
+
+  <h3>文字を組み立ててみよう</h3>
+  <div class="composer">
+    <div>
+      <div class="sel">
+        <label for="selCho">初声（子音）<select id="selCho"></select></label>
+        <label for="selJung">中声（母音）<select id="selJung"></select></label>
+        <label for="selJong">終声（パッチム）<select id="selJong"></select></label>
+      </div>
+      <div class="row">
+        <button class="btn" id="cmpSay" type="button">音を聞く</button>
+        <button class="btn ghost" id="cmpRand" type="button">ランダム</button>
+      </div>
+    </div>
+    <div class="out"><div class="syl" id="cmpOut">한</div><div class="code" id="cmpCode">U+D55C</div></div>
+  </div>
+</section>
+
+<!-- 5 TOPIK -->
+<section class="step" id="topik">
+  <div class="step-head">
+    <div class="step-no">5</div>
+    <div>
+      <h2>TOPIK I 単語<span class="ko">토픽 I 단어</span></h2>
+      <p>TOPIK I（1〜2級）に出る基礎語彙をテーマ別に集めました。単語をタップすると発音が流れます。右の四角をタップすると「覚えた」印がつきます（このブラウザにだけ保存されます）。</p>
+    </div>
+  </div>
+
+  <div class="notes" style="margin:0 0 18px">
+    <div class="note jp-tip"><span class="lab">日本人の強み</span><b>漢字語</b>は日本語とよく似ています。가족（家族）、준비（準備）、도서관（図書館）。黄色い<span style="font-family:'Shippori Mincho',serif;color:var(--amber)">漢字</span>のついた単語がそれです。</div>
+    <div class="note jp-tip"><span class="lab">覚え方</span>漢字1字の読みはほぼ1つに決まっています。学＝학、生＝생、校＝교 なので、学生＝학생、学校＝학교。</div>
+    <div class="note"><b>意味が違う漢字語に注意</b> 공부（工夫）＝勉強、애인（愛人）＝恋人。약속（約束）は同じ意味です。</div>
+  </div>
+
+  <div class="flash" id="flash">
+    <div>
+      <div class="fl">単語カード · <span id="fCount"></span></div>
+      <div class="fw" id="fWord">사과</div>
+      <div class="fm" id="fMean"></div>
+    </div>
+    <div class="acts">
+      <button class="btn ghost" id="fSay" type="button">発音</button>
+      <button class="btn ghost" id="fShow" type="button">答え</button>
+      <button class="btn" id="fNext" type="button">次へ</button>
+    </div>
+  </div>
+
+  <div class="vtools">
+    <input type="search" id="vq" placeholder="韓国語・日本語で検索（例：학교、食べる）" aria-label="単語を検索">
+    <label class="chk" for="vHide"><input type="checkbox" id="vHide"> 意味を隠す</label>
+    <label class="chk" for="vKnown"><input type="checkbox" id="vKnown"> 覚えた単語を隠す</label>
+    <label class="chk" for="vHanja"><input type="checkbox" id="vHanja"> 漢字語だけ</label>
+    <label class="chk" for="vRev"><input type="checkbox" id="vRev"> カードを日→韓にする</label>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="vstat" id="vstat"></div>
+  <div class="vgrid" id="vgrid"></div>
+  <div class="more"><button class="btn ghost" id="vMore" type="button" hidden>もっと見る</button></div>
+</section>
+</main>
+
+
+<a class="line-fab" id="lineFab" target="_blank" rel="noopener" hidden>LINEで質問する</a>
+
+<footer class="wrap">
+  <p class="foot-line"><a id="lineFoot" target="_blank" rel="noopener" hidden>わからないことは LINE で質問してください →</a></p>
+  ローマ字は韓国の国立国語院「国語のローマ字表記法」に従っています。カナ表記はおおよその目安です。正確な音は音声で確認してください。単語リストはTOPIK Iレベルの基礎語彙をテーマ別にまとめた学習用リストで、公式の語彙リストそのものではありません。音声は端末にインストールされた韓国語音声で再生されます。
+</footer>
+
+<script>
+document.documentElement.lang='ja';
+/* ---------- speech ---------- */
+const synth = window.speechSynthesis;
+let koVoice = null;
+function pickVoice(){ try{ const v=synth.getVoices(); koVoice=v.find(x=>/^ko/i.test(x.lang))||null; if(v.length && !koVoice) document.getElementById('ttsWarn').hidden=false; }catch(e){} }
+if(synth){ pickVoice(); synth.onvoiceschanged=pickVoice; } else { document.getElementById('ttsWarn').hidden=false; }
+function utter(t){ const u=new SpeechSynthesisUtterance(t); u.lang='ko-KR'; u.rate=.85; if(koVoice) u.voice=koVoice; return u; }
+function speak(text, el){
+  if(!synth) return;
+  try{ synth.cancel(); const u=utter(text);
+    if(el){ el.classList.add('playing'); u.onend=u.onerror=()=>el.classList.remove('playing'); setTimeout(()=>el.classList.remove('playing'),2500); }
+    synth.speak(u); }catch(e){}
+}
+function speakSeq(a,b,el){ if(!synth) return; try{ synth.cancel(); if(el){ el.classList.add('playing'); setTimeout(()=>el.classList.remove('playing'),2500);} synth.speak(utter(a)); synth.speak(utter(b)); }catch(e){} }
+const $=s=>document.querySelector(s);
+const h=(tag,cls,txt)=>{ const e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; };
+function sayBtn(word,pron){ const b=h('button','say'); b.type='button'; b.lang='ko'; b.textContent=word; if(pron) b.append(h('small',null,'['+pron+']')); b.onclick=()=>speak(pron||word); return b; }
+function td(label, content, cls){ const t=h('td',cls); if(label) t.dataset.l=label; if(content!=null){ if(typeof content==='string') t.textContent=content; else t.append(content); } return t; }
+
+/* ---------- card factory ---------- */
+function card({glyph,tag,name,rom,kana,hint,ex,exMean,formula,speakText,cls}){
+  const c=h('button','card'+(cls?' '+cls:'')); c.type='button';
+  const top=h('div','top'); const g=h('span','glyph',glyph); g.lang='ko'; top.append(g);
+  if(formula) top.append(h('span','formula',formula)); else if(tag) top.append(h('span','tag',tag));
+  const nm=h('div','name ko',name); nm.lang='ko';
+  const r=h('div','rom'); r.append(h('span','r',rom)); if(kana) r.append(h('span','kana',kana));
+  c.append(top,nm,r);
+  if(hint) c.append(h('div','hint',hint));
+  const e=h('div','ex'); const b=h('b',null,ex); b.lang='ko'; e.append(b,document.createTextNode(exMean)); c.append(e);
+  c.onclick=()=>speakSeq(speakText,ex,c);
+  return c;
+}
+
+/* ---------- 1 vowels ---------- */
+const VOWELS=[
+ ['ㅏ','아','a','ア','','右','아이','子ども'],['ㅑ','야','ya','ヤ','','右','야구','野球'],
+ ['ㅓ','어','eo','オ','口を縦に大きく開ける','右','어머니','お母さん'],['ㅕ','여','yeo','ヨ','ㅓ の口で「ヨ」','右','여우','キツネ'],
+ ['ㅗ','오','o','オ','唇を丸く突き出す','下','오이','キュウリ'],['ㅛ','요','yo','ヨ','ㅗ の口で「ヨ」','下','요리','料理'],
+ ['ㅜ','우','u','ウ','唇を突き出す','下','우유','牛乳'],['ㅠ','유','yu','ユ','','下','유리','ガラス'],
+ ['ㅡ','으','eu','ウ','唇を横に引いたまま','下','그림','絵'],['ㅣ','이','i','イ','','右','이름','名前']];
+VOWELS.forEach(([g,n,r,k,hi,t,ex,m])=>$('#vowelGrid').append(card({glyph:g,tag:t,name:n,rom:r,kana:k,hint:hi,ex,exMean:m,speakText:n})));
+
+/* ---------- 2 consonants ---------- */
+const CONS=[
+ ['ㄱ','기역','g / k','カ・ガ行','','가방','カバン'],['ㄴ','니은','n','ナ行','','나비','チョウ'],['ㄷ','디귿','d / t','タ・ダ行','','다리','脚・橋'],
+ ['ㄹ','리을','r / l','ラ行','パッチムでは英語の L','라면','ラーメン'],['ㅁ','미음','m','マ行','','모자','帽子'],['ㅂ','비읍','b / p','パ・バ行','','바다','海'],
+ ['ㅅ','시옷','s','サ行','시 は「シ」','사과','リンゴ'],['ㅇ','이응','– / ng','無音','パッチムでは「ン(ng)」','오리','アヒル'],['ㅈ','지읒','j','チャ・ジャ行','','자두','スモモ'],
+ ['ㅊ','치읓','ch','チャ行','息を強く出す','치마','スカート'],['ㅋ','키읔','k','カ行','息を強く出す','코','鼻'],['ㅌ','티읕','t','タ行','息を強く出す','토끼','ウサギ'],
+ ['ㅍ','피읖','p','パ行','息を強く出す','포도','ブドウ'],['ㅎ','히읗','h','ハ行','','하마','カバ']];
+CONS.forEach(([g,n,r,k,hi,ex,m])=>$('#consGrid').append(card({glyph:g,name:n,rom:r,kana:k,hint:hi,ex,exMean:m,speakText:n})));
+const DBL=[['ㄲ','쌍기역','kk','ッカ','꼬리','しっぽ'],['ㄸ','쌍디귿','tt','ッタ','딸기','イチゴ'],['ㅃ','쌍비읍','pp','ッパ','빵','パン'],['ㅆ','쌍시옷','ss','ッサ','쌀','米'],['ㅉ','쌍지읒','jj','ッチャ','짜다','しょっぱい']];
+DBL.forEach(([g,n,r,k,ex,m])=>$('#dblGrid').append(card({glyph:g,tag:'濃音',name:n,rom:r,kana:k,hint:'喉に力を入れ、息を出さない',ex,exMean:m,speakText:n,cls:'dbl'})));
+const TRIAD=[['舌の根','가','카','까'],['舌先','다','타','따'],['唇','바','파','빠'],['舌と歯ぐき','자','차','짜'],['歯','사','–','싸']];
+TRIAD.forEach(([p,...s])=>{ const tr=h('tr'); tr.append(td(null,p)); s.forEach(x=>tr.append(td(null,x==='–'?'–':sayBtn(x)))); $('#triadBody').append(tr); });
+
+/* ---------- 3 compound ---------- */
+const COMP=[
+ ['ㅐ','애','ae','エ','ㅏ+ㅣ','개','犬'],['ㅒ','얘','yae','イェ','ㅑ+ㅣ','얘기','話'],['ㅔ','에','e','エ','ㅓ+ㅣ','게','カニ'],
+ ['ㅖ','예','ye','イェ','ㅕ+ㅣ','시계','時計'],['ㅘ','와','wa','ワ','ㅗ+ㅏ','과자','お菓子'],['ㅙ','왜','wae','ウェ','ㅗ+ㅐ','왜','なぜ'],
+ ['ㅚ','외','oe','ウェ','ㅗ+ㅣ','회사','会社'],['ㅝ','워','wo','ウォ','ㅜ+ㅓ','원','ウォン（₩）'],['ㅞ','웨','we','ウェ','ㅜ+ㅔ','웨이터','ウェイター'],
+ ['ㅟ','위','wi','ウィ','ㅜ+ㅣ','귀','耳'],['ㅢ','의','ui','ウイ','ㅡ+ㅣ','의사','医師']];
+COMP.forEach(([g,n,r,k,f,ex,m])=>$('#compGrid').append(card({glyph:g,formula:f,name:n,rom:r,kana:k,ex,exMean:m,speakText:n})));
+
+/* ---------- 4 batchim ---------- */
+const REP=[
+ ['ㄱ','ㄱ ㅋ ㄲ','「さ<em>っ</em>か」の「っ」。舌の根で止める',[['책'],['부엌','부억'],['밖','박']]],
+ ['ㄴ','ㄴ','「あ<em>ん</em>ない」の「ん」。舌先が歯ぐきにつく',[['산'],['눈'],['돈']]],
+ ['ㄷ','ㄷ ㅅ ㅆ ㅈ ㅊ ㅌ ㅎ','「や<em>っ</em>た」の「っ」。舌先で止める',[['옷','옫'],['있다','읻따'],['낮','낟'],['꽃','꼳'],['밭','받']]],
+ ['ㄹ','ㄹ','英語の L。舌先を上あごにつけたまま',[['물'],['말'],['길']]],
+ ['ㅁ','ㅁ','「さ<em>ん</em>ま」の「ん」。口を閉じる',[['밤'],['김'],['몸']]],
+ ['ㅂ','ㅂ ㅍ','「い<em>っ</em>ぱい」の「っ」。唇を閉じて止める',[['밥'],['집'],['앞','압']]],
+ ['ㅇ','ㅇ','「り<em>ん</em>ご」の「ん」。口を開けたまま',[['강'],['방'],['공']]]];
+REP.forEach(([r,letters,jp,exs])=>{ const tr=h('tr'); tr.append(td('代表音',h('span','rep',r))); tr.append(td('パッチムの文字',letters,'big bat')); const j=td('日本語で言うと',null,'jp'); j.innerHTML=jp; tr.append(j); const t3=td('例'); exs.forEach(([w,p])=>t3.append(sayBtn(w,p))); tr.append(t3); $('#repBody').append(tr); });
+const DBLBAT=[['ㄳ','ㄱ','넋','넉'],['ㄵ','ㄴ','앉다','안따'],['ㄶ','ㄴ','많다','만타'],['ㄺ','ㄱ','닭','닥'],['ㄻ','ㅁ','삶','삼'],['ㄼ','ㄹ','여덟','여덜'],['ㄾ','ㄹ','핥다','할따'],['ㄿ','ㅂ','읊다','읍따'],['ㅀ','ㄹ','싫다','실타'],['ㅄ','ㅂ','값','갑']];
+DBLBAT.forEach(([g,s,w,p])=>{ const tr=h('tr'); tr.append(td(null,g,'big bat'),td(null,h('span','rep',s)),td(null,sayBtn(w,p))); $('#dblBatBody').append(tr); });
+const RULES=[
+ ['連音化','パッチムの後に母音が来ると、パッチムが次の文字に移って発音されます。',[['옷이','오시'],['책을','채글'],['음악','으막']]],
+ ['鼻音化','ㄱ ㄷ ㅂ のパッチムの後に ㄴ ㅁ が来ると、ㅇ ㄴ ㅁ に変わります。',[['합니다','함니다'],['국물','궁물'],['끝나다','끈나다']]],
+ ['濃音化','ㄱ ㄷ ㅂ のパッチムの後の ㄱ ㄷ ㅂ ㅅ ㅈ は濃音になります。',[['학교','학꾜'],['식당','식땅'],['잡지','잡찌']]],
+ ['激音化','ㅎ と ㄱ ㄷ ㅂ ㅈ が出会うと激音になります。',[['좋다','조타'],['축하','추카'],['입학','이팍']]],
+ ['ㅎの脱落','ㅎ パッチムの後に母音が来ると、ㅎ は発音しません。',[['좋아요','조아요'],['많이','마니'],['놓아','노아']]],
+ ['流音化','ㄴ と ㄹ が出会うと、どちらも ㄹ で発音します。',[['신라','실라'],['연락','열락'],['설날','설랄']]],
+ ['口蓋音化','ㄷ ㅌ パッチムの後に 이 が来ると、지・치 と発音します。',[['같이','가치'],['굳이','구지'],['해돋이','해도지']]]];
+RULES.forEach(([n,d,exs])=>{ const tr=h('tr'); const a=td('ルール',n); a.style.fontWeight='600'; tr.append(a,td('説明',d)); const t3=td('例'); exs.forEach(([w,p])=>t3.append(sayBtn(w,p))); tr.append(t3); $('#ruleBody').append(tr); });
+
+/* composer */
+const CHO='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'.split('');
+const JUNG='ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ'.split('');
+const JONG=['なし',...'ㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ'.split('')];
+function fill(sel,arr,def){ arr.forEach((x,i)=>{ const o=h('option',null,x); o.value=i; sel.append(o); }); sel.value=def; }
+fill($('#selCho'),CHO,18); fill($('#selJung'),JUNG,0); fill($('#selJong'),JONG,4);
+function compose(){ const c=+$('#selCho').value,j=+$('#selJung').value,k=+$('#selJong').value; const code=0xAC00+(c*21+j)*28+k; const s=String.fromCharCode(code); $('#cmpOut').textContent=s; $('#cmpCode').textContent=CHO[c]+' + '+JUNG[j]+(k?' + '+JONG[k]:'')+'  ·  U+'+code.toString(16).toUpperCase(); return s; }
+['#selCho','#selJung','#selJong'].forEach(s=>$(s).addEventListener('change',compose));
+$('#cmpSay').onclick=()=>speak(compose());
+$('#cmpRand').onclick=()=>{ $('#selCho').value=Math.floor(Math.random()*19); $('#selJung').value=Math.floor(Math.random()*21); $('#selJong').value=Math.random()<.5?0:Math.floor(Math.random()*28); speak(compose()); };
+compose();
+
+/* ---------- 5 TOPIK I vocabulary ----------
+   format: 단어=意味  or  단어=意味=漢字  or  단어=*漢字 (意味と漢字が同じ) */
+const VOCAB={
+'あいさつ・表現':`안녕하세요=こんにちは|안녕히 가세요=さようなら（去る人に）|안녕히 계세요=さようなら（残る人に）|안녕=やあ／じゃあね（タメ口）|감사합니다=ありがとうございます=感謝|고맙습니다=ありがとうございます|죄송합니다=申し訳ありません|미안합니다=すみません|괜찮아요=大丈夫です|네=はい|예=はい|아니요=いいえ|실례합니다=失礼します=失礼|처음 뵙겠습니다=はじめまして|반갑습니다=お会いできてうれしいです|잘 먹겠습니다=いただきます|잘 먹었습니다=ごちそうさまでした|어서 오세요=いらっしゃいませ|축하합니다=おめでとうございます=祝賀|여보세요=もしもし|수고하셨습니다=お疲れさまでした|잠깐만요=ちょっと待ってください|주세요=ください|천만에요=どういたしまして|잘 지내요=元気です|오래간만이에요=お久しぶりです|또 만나요=また会いましょう|잘 자요=おやすみ|안녕히 주무세요=おやすみなさい（丁寧）|생일 축하해요=お誕生日おめでとう|새해 복 많이 받으세요=あけましておめでとうございます|조심하세요=気をつけてください|힘내세요=がんばってください|알겠습니다=わかりました|모르겠습니다=わかりません|그래요=そうですか／そうです|맞아요=その通りです|글쎄요=さあ、どうでしょう`,
+'人・家族':`사람=人|남자=男、男性=男子|여자=女、女性=女子|아이=子ども|어린이=子ども|아기=赤ちゃん|어른=大人|청소년=*青少年|노인=*老人|친구=友だち|가족=*家族|부모님=ご両親=父母|아버지=お父さん・父|아빠=パパ|어머니=お母さん・母|엄마=ママ|할아버지=おじいさん|할머니=おばあさん|형=兄（男性から見て）=兄|오빠=兄（女性から見て）|누나=姉（男性から見て）|언니=姉（女性から見て）|동생=弟・妹|남동생=弟|여동생=妹|형제=*兄弟|아들=息子|딸=娘|남편=夫|아내=妻|부부=*夫婦|삼촌=おじ=三寸|이모=おば（母の姉妹）=姨母|고모=おば（父の姉妹）=姑母|손자=孫（男）=孫子|손녀=孫（女）=孫女|사촌=いとこ=四寸|남자 친구=彼氏|여자 친구=彼女|애인=恋人（※日本語の「愛人」とは違う）=愛人|손님=お客さん|이웃=隣人・近所の人|선배=*先輩|후배=*後輩|동료=*同僚|주인=主人・持ち主=主人|씨=〜さん=氏|분=方（かた）|외국인=*外国人|한국 사람=韓国人|미국 사람=アメリカ人|중국 사람=中国人|일본 사람=日本人|여러분=皆さん|남=他人|자신=自分=自身|나이=年齢|이름=名前|성함=お名前（敬語）|연세=お年（敬語）=年歳|결혼=*結婚|생일=誕生日=生日|생신=お誕生日（敬語）`,
+'職業':`직업=*職業|학생=*学生|대학생=*大学生|고등학생=高校生=高等学生|중학생=*中学生|초등학생=小学生=初等学生|선생님=先生=先生|교수=*教授|의사=医師・医者=医師|간호사=*看護師|회사원=*会社員|직원=職員・社員=職員|점원=*店員|은행원=*銀行員|공무원=*公務員|경찰=*警察|경찰관=*警察官|소방관=消防士=消防官|기자=*記者|가수=*歌手|배우=*俳優|요리사=料理人・シェフ=料理師|운전기사=運転手=運転技士|군인=*軍人|주부=*主婦|사장=*社長|사장님=社長さん・店主|부장=*部長|과장=*課長|화가=*画家|작가=*作家|약사=薬剤師=薬師|변호사=*弁護士|비서=*秘書|미용사=*美容師|안내원=案内係=案内員|가이드=ガイド|운동선수=スポーツ選手=運動選手|선수=*選手|모델=モデル|통역사=通訳者=通訳士|번역가=*翻訳家|농부=農家の人=農夫|교사=*教師`,
+'体・健康':`몸=体|머리=頭・髪|머리카락=髪の毛|얼굴=顔|눈=目・雪|코=鼻|입=口|귀=耳|이=歯|목=首・のど|어깨=肩|팔=腕|손=手|손가락=指|다리=脚・橋|발=足|발가락=足の指|배=お腹・梨・船|허리=腰|등=背中|가슴=胸|무릎=ひざ|피=血|피부=*皮膚|키=背の高さ|몸무게=体重|병=病気・瓶=病・瓶|병원=*病院|약=*薬|약국=*薬局|감기=風邪=感気|열=熱・十=熱|기침=せき|콧물=鼻水|두통=*頭痛|배탈=腹痛（食あたり）|상처=傷=傷処|건강=*健康|수술=*手術|주사=*注射|입원=*入院|퇴원=*退院|치과=歯科・歯医者=歯科|환자=*患者|다이어트=ダイエット|살=肉・ぜい肉|마음=心|기분=*気分|스트레스=ストレス|목소리=声|힘=力|잠=眠り|꿈=夢|땀=汗|눈물=涙|치료=*治療|진찰=*診察`,
+'食べ物':`음식=食べ物=飲食|밥=ご飯|쌀=米|빵=パン|국=スープ|찌개=チゲ（鍋料理）|김치=キムチ|불고기=プルコギ|비빔밥=ビビンバ|김밥=キンパ|라면=ラーメン|냉면=*冷麺|떡=餅|떡볶이=トッポッキ|삼계탕=*参鶏湯|갈비=カルビ|된장찌개=味噌チゲ|김치찌개=キムチチゲ|고기=肉|소고기=牛肉|돼지고기=豚肉|닭고기=鶏肉|생선=魚（食べ物）=生鮮|계란=卵=鶏卵|달걀=卵|야채=*野菜|채소=野菜=菜蔬|과일=果物|사과=リンゴ|바나나=バナナ|포도=ブドウ=葡萄|딸기=イチゴ|수박=スイカ|귤=ミカン=橘|오렌지=オレンジ|감=柿|복숭아=桃|레몬=レモン|토마토=トマト|감자=ジャガイモ|고구마=サツマイモ|양파=玉ねぎ|배추=白菜|무=大根|당근=ニンジン|오이=キュウリ|마늘=ニンニク|파=ネギ|고추=唐辛子|콩=豆|두부=*豆腐|버섯=キノコ|물=水|우유=*牛乳|커피=コーヒー|차=お茶・車=茶・車|녹차=*緑茶|주스=ジュース|콜라=コーラ|맥주=ビール=麦酒|소주=*焼酎|술=酒|음료수=飲み物=飲料水|케이크=ケーキ|과자=お菓子=菓子|사탕=飴=砂糖|초콜릿=チョコレート|아이스크림=アイスクリーム|햄버거=ハンバーガー|피자=ピザ|샌드위치=サンドイッチ|샐러드=サラダ|스파게티=スパゲッティ|국수=麺|만두=餃子=饅頭|죽=お粥=粥|설탕=砂糖=雪糖|소금=塩|간장=しょうゆ=醤|고추장=コチュジャン|된장=味噌|기름=油|아침=朝・朝ご飯|점심=昼ご飯=点心|저녁=夕方・夕ご飯|식사=*食事|반찬=おかず|간식=おやつ=間食|요리=*料理|맛=味|메뉴=メニュー|식당=食堂・レストラン=食堂|그릇=器|접시=皿|컵=コップ|잔=杯・グラス|숟가락=スプーン|젓가락=箸|포크=フォーク|칼=ナイフ・包丁|냄비=鍋|도시락=お弁当|외식=*外食|배달=配達・出前=配達|주문=*注文`,
+'家・生活':`집=家|방=部屋=房|거실=リビング=居室|부엌=台所|화장실=トイレ=化粧室|욕실=*浴室|침실=*寝室|현관=*玄関|문=ドア・門=門|창문=窓=窓門|벽=*壁|계단=*階段|엘리베이터=エレベーター|마당=庭|정원=*庭園|아파트=マンション|기숙사=寮=寄宿舎|하숙집=下宿|원룸=ワンルーム|층=〜階=層|침대=ベッド=寝台|책상=机=冊床|의자=*椅子|소파=ソファー|식탁=*食卓|옷장=タンス|냉장고=*冷蔵庫|세탁기=*洗濯機|텔레비전=テレビ|에어컨=エアコン|선풍기=*扇風機|컴퓨터=パソコン|노트북=ノートパソコン|전화=*電話|휴대폰=携帯電話|핸드폰=携帯電話|시계=*時計|거울=鏡|열쇠=鍵|우산=傘=雨傘|가방=カバン|지갑=財布|안경=*眼鏡|수건=タオル=手巾|비누=石けん|치약=歯磨き粉=歯薬|칫솔=歯ブラシ|샴푸=シャンプー|휴지=ティッシュ=休紙|쓰레기=ごみ|쓰레기통=ごみ箱|불=火・明かり|전기=*電気|이불=布団|베개=枕|사진=*写真|그림=絵|청소=掃除=清掃|빨래=洗濯|설거지=皿洗い|이사=引っ越し=移徙|월세=家賃（月払い）=月貰|주소=*住所|상자=箱=箱子|선물=プレゼント=膳物|편지=手紙=便紙|소포=*小包|우표=切手=郵票|카드=カード|물건=物・品物=物件|일상=*日常|생활=*生活|전화번호=*電話番号|문자=メッセージ（SMS）=文字|이메일=Eメール|인터넷=インターネット|비밀번호=暗証番号・パスワード=秘密番号|충전=*充電|배터리=バッテリー|커튼=カーテン|꽃병=花瓶|화분=植木鉢=花盆`,
+'服・色':`옷=服|바지=ズボン|치마=スカート|셔츠=シャツ|티셔츠=Tシャツ|블라우스=ブラウス|원피스=ワンピース|코트=コート|재킷=ジャケット|스웨터=セーター|청바지=ジーンズ|양복=スーツ=洋服|한복=韓服（伝統衣装）=韓服|속옷=下着|양말=靴下|신발=履物・靴|구두=革靴|운동화=*運動靴|슬리퍼=スリッパ|모자=*帽子|장갑=手袋=掌匣|목도리=マフラー|스카프=スカーフ|넥타이=ネクタイ|반지=指輪|목걸이=ネックレス|귀걸이=イヤリング|화장품=*化粧品|색깔=色|색=*色|빨간색=赤|파란색=青|노란색=黄色|초록색=緑=草緑色|하얀색=白|흰색=白|검은색=黒|까만색=黒|회색=*灰色|분홍색=ピンク=粉紅色|보라색=紫|갈색=茶色=褐色|주황색=オレンジ色=朱黄色|하늘색=水色|크기=大きさ|사이즈=サイズ|디자인=デザイン|스타일=スタイル|유행=*流行`,
+'買い物・お金':`쇼핑=ショッピング|시장=*市場|백화점=デパート=百貨店|마트=スーパー|가게=店|편의점=コンビニ=便宜店|슈퍼마켓=スーパーマーケット|가격=*価格|값=値段|돈=お金|원=ウォン|달러=ドル|현금=*現金|신용카드=クレジットカード=信用|영수증=領収書・レシート=領収証|거스름돈=おつり|잔돈=小銭|할인=*割引|세일=セール|계산=会計・計算=計算|교환=*交換|환불=払い戻し=還払|무료=*無料|공짜=ただ（無料）|봉투=袋・封筒=封套|통장=*通帳|환전=両替=換銭|은행=*銀行|용돈=おこづかい|월급=*月給|비용=*費用|요금=*料金`,
+'場所':`학교=*学校|대학교=大学=大学校|교실=*教室|도서관=*図書館|회사=*会社|사무실=事務室・オフィス=事務室|우체국=郵便局=郵逓局|카페=カフェ|커피숍=コーヒーショップ|빵집=パン屋|서점=書店・本屋=書店|꽃집=花屋|미용실=美容院=美容室|극장=劇場・映画館=劇場|영화관=*映画館|박물관=*博物館|미술관=*美術館|공원=*公園|놀이공원=遊園地|동물원=*動物園|수영장=プール=水泳場|체육관=*体育館|헬스장=スポーツジム|운동장=*運動場|호텔=ホテル|공항=*空港|역=*駅|지하철역=地下鉄の駅|정류장=停留所=停留場|버스 정류장=バス停|주차장=*駐車場|경찰서=*警察署|대사관=*大使館|교회=*教会|절=寺|성당=カトリック教会=聖堂|노래방=カラオケ|PC방=ネットカフェ|건물=*建物|길=道|거리=通り・距離|도로=*道路|사거리=交差点|횡단보도=*横断歩道|도시=*都市|시골=田舎|고향=*故郷|동네=町内・近所|나라=国|세계=*世界|외국=*外国|해외=*海外|곳=所|장소=*場所|시청=市役所=市庁|구청=区役所=区庁|센터=センター|매표소=切符売り場=売票所|입구=*入口|출구=*出口|안내소=*案内所|휴게소=*休憩所|여행사=旅行会社=旅行社|세탁소=クリーニング店=洗濯所|문구점=文房具店=文具店|시내=*市内`,
+'国・地域':`한국=*韓国|미국=アメリカ=美国|중국=*中国|일본=*日本|영국=イギリス=英国|프랑스=フランス|독일=ドイツ=独逸|베트남=ベトナム|태국=タイ=泰国|러시아=ロシア|캐나다=カナダ|호주=オーストラリア=濠洲|인도=インド|몽골=モンゴル|필리핀=フィリピン|인도네시아=インドネシア|스페인=スペイン|이탈리아=イタリア|브라질=ブラジル|서울=ソウル|부산=*釜山|제주도=*済州島|경주=*慶州|인천=*仁川|대구=*大邱|아시아=アジア|유럽=ヨーロッパ|한국어=*韓国語|영어=*英語|중국어=*中国語|일본어=*日本語|외국어=*外国語|말=言葉・話・馬`,
+'位置・方向':`앞=前|뒤=後ろ|옆=横・隣|위=上|아래=下|밑=下・底|안=中・内|밖=外|속=中・奥|사이=間|가운데=真ん中|왼쪽=左|오른쪽=右|동쪽=東|서쪽=西|남쪽=南|북쪽=北|여기=ここ|거기=そこ|저기=あそこ|어디=どこ|이쪽=こちら|그쪽=そちら|저쪽=あちら|쪽=〜側・〜の方|근처=近く=近処|건너편=向かい側|맞은편=向かい側|방향=*方向|중간=*中間|끝=終わり・端|바깥=外側|위치=*位置`,
+'交通・旅行':`버스=バス|지하철=*地下鉄|택시=タクシー|기차=列車=汽車|비행기=*飛行機|자동차=*自動車|자전거=*自転車|오토바이=バイク|고속버스=高速バス|KTX=KTX（高速鉄道）|표=切符=票|교통카드=交通カード|운전=*運転|출발=*出発|도착=*到着|시간표=時刻表・時間割=時間表|노선=*路線|교통=*交通|신호등=信号=信号灯|사고=*事故|여행=*旅行|출장=*出張|여권=パスポート=旅券|비자=ビザ|짐=荷物|지도=*地図|관광=*観光|관광지=*観光地|관광객=*観光客|안내=*案内|예약=*予約|기념품=*記念品|항구=港=港口|좌석=*座席|자리=席・場所|창가=窓際|통로=*通路|호선=〜号線=号線|정거장=停留所・駅=停車場|환승=乗り換え=換乗|면허증=*免許証|속도=*速度|일정=日程・スケジュール=日程|숙소=宿=宿所|캠핑=キャンプ`,
+'時間・日付':`시간=*時間|시=〜時=時|분=〜分=分|초=〜秒=秒|오전=*午前|오후=*午後|새벽=明け方|아침=朝|낮=昼|저녁=夕方|밤=夜|오늘=今日|어제=昨日|내일=明日=来日|모레=あさって|그저께=おととい|날=日|하루=一日|주=週=週|일주일=一週間=一週日|주말=*週末|평일=*平日|월=〜月=月|달=（暦の）月|년=〜年=年|해=年・太陽|올해=今年|작년=*昨年|내년=*来年|이번=今回|지난=この前の|다음=次|매일=*毎日|매주=*毎週|매달=毎月|매년=*毎年|요일=*曜日|월요일=*月曜日|화요일=*火曜日|수요일=*水曜日|목요일=*木曜日|금요일=*金曜日|토요일=*土曜日|일요일=*日曜日|일월=1月|이월=2月|삼월=3月|사월=4月|오월=5月|유월=6月（육월ではない）|칠월=7月|팔월=8月|구월=9月|시월=10月（십월ではない）|십일월=11月|십이월=12月|봄=春|여름=夏|가을=秋|겨울=冬|계절=*季節|휴일=*休日|휴가=*休暇|방학=（学校の）長期休み=放学|명절=伝統的な祝日=名節|설날=旧正月|추석=秋夕（旧盆）=秋夕|크리스마스=クリスマス|날짜=日付|달력=カレンダー|처음=初め・最初|마지막=最後|동안=〜の間|전=〜前=前|후=〜後=後|지금=今=只今|요즘=最近・このごろ|나중=後（あと）|옛날=昔|미래=*未来|과거=*過去|현재=*現在|최근=*最近|시작=始まり=始作|중=〜中=中|때=時（とき）|쯤=〜ごろ|반=半・半分=半|기간=*期間|연휴=*連休|어젯밤=昨夜|오늘밤=今夜|이번 주=今週|지난주=先週|다음 주=来週|이번 달=今月|지난달=先月|다음 달=来月|하루 종일=一日中|평소=普段=平素|아까=さっき|방금=たった今=方今|이따가=後で（少ししたら）|금방=すぐ=今方|잠깐=ちょっと（の間）|잠시=しばらく=暫時`,
+'天気・自然':`날씨=天気|비=雨|눈=雪|바람=風|구름=雲|하늘=空|해=太陽|달=月|별=星|기온=*気温|온도=*温度|도=〜度=度|일기예보=天気予報=日気予報|장마=梅雨|태풍=*台風|안개=霧|무지개=虹|꽃=花|나무=木|풀=草・のり|잎=葉|나뭇잎=木の葉|돌=石|땅=土地・地面|흙=土|바다=海|산=*山|강=川=江|섬=島|호수=湖=湖水|숲=森|공기=*空気|환경=*環境|자연=*自然|경치=景色=景致|단풍=紅葉=丹楓|벚꽃=桜|장미=バラ=薔薇|해변=*海辺|불꽃=炎・花火|소나기=にわか雨|번개=稲妻|천둥=雷|더위=暑さ|추위=寒さ`,
+'動物':`동물=*動物|개=犬|강아지=子犬|고양이=猫|새=鳥|소=牛|돼지=豚|말=馬|닭=鶏|토끼=ウサギ|호랑이=トラ|곰=クマ|원숭이=サル|사자=ライオン=獅子|코끼리=ゾウ|물고기=魚|쥐=ネズミ|뱀=ヘビ|양=*羊|오리=アヒル|기린=キリン=麒麟|여우=キツネ|곤충=*昆虫|모기=蚊|나비=チョウ|벌=ハチ|개미=アリ|애완동물=ペット=愛玩動物|반려동물=ペット（伴侶動物）=伴侶動物`,
+'学校・勉強':`공부=勉強（※日本語の「工夫」とは違う）=工夫|수업=*授業|숙제=*宿題|시험=*試験|문제=*問題|질문=*質問|대답=返事・答え=対答|답=答え=答|책=本=冊|공책=ノート|노트=ノート|연필=*鉛筆|볼펜=ボールペン|펜=ペン|지우개=消しゴム|종이=紙|사전=辞書=辞典|교과서=*教科書|칠판=黒板=漆板|단어=*単語|문장=文=文章|문법=*文法|발음=*発音|글=文章・文|글자=文字|한글=ハングル|언어=*言語|번호=*番号|반=クラス=班|학년=*学年|학기=*学期|입학=*入学|졸업=*卒業|유학=*留学|유학생=*留学生|장학금=*奨学金|성적=*成績|점수=*点数|과목=*科目|수학=*数学|과학=*科学|역사=*歴史|음악=*音楽|미술=*美術|체육=*体育|강의=*講義|연습=*練習|복습=*復習|예습=*予習|설명=*説明|뜻=意味|의미=*意味|내용=*内容|이야기=話|읽기=読むこと（読解）|쓰기=書くこと|듣기=聞くこと（聴解）|말하기=話すこと|숫자=*数字|생각=考え|계획=*計画|목표=*目標|경험=*経験|문화=*文化|정보=*情報|뉴스=ニュース|신문=*新聞|잡지=*雑誌|소설=*小説|시=詩=詩|동화=*童話|학원=塾=学院|출석=*出席|결석=*欠席|지각=*遅刻|발표=*発表|보고서=レポート=報告書|자료=*資料|준비물=持ち物=準備物|가위=はさみ|자=定規|필통=筆箱=筆筒|실력=*実力|실수=ミス=失手|대화=会話=対話|예=例=例`,
+'仕事・会社':`일=仕事・こと|회의=*会議|출근=*出勤|퇴근=退社=退勤|아르바이트=アルバイト|취직=*就職|면접=*面接|사업=*事業|서류=*書類|명함=名刺=名銜|야근=残業=夜勤|직장=*職場|업무=*業務|계약=*契約|부서=*部署|월급날=給料日|일자리=働き口|광고=*広告|은퇴=*引退|모임=集まり`,
+'趣味・余暇':`취미=*趣味|운동=運動・スポーツ=運動|축구=サッカー=蹴球|야구=*野球|농구=バスケットボール=籠球|배구=バレーボール=排球|테니스=テニス|탁구=*卓球|골프=ゴルフ|수영=*水泳|스키=スキー|등산=*登山|산책=散歩=散策|조깅=ジョギング|요가=ヨガ|태권도=テコンドー=跆拳道|독서=*読書|영화=*映画|노래=歌|춤=踊り・ダンス|게임=ゲーム|드라마=ドラマ|콘서트=コンサート|공연=*公演|전시회=*展示会|축제=祭り=祝祭|파티=パーティー|약속=*約束|데이트=デート|낚시=釣り|피아노=ピアノ|기타=ギター|바이올린=バイオリン|악기=*楽器|구경=見物|경기=試合=競技|팀=チーム|티켓=チケット|휴식=*休息|소풍=遠足・ピクニック|동아리=サークル|사진기=カメラ=写真機|카메라=カメラ|만화=*漫画|인기=*人気|배드민턴=バドミントン|여행지=旅行先=旅行地|관람=*観覧|박수=*拍手|가사=*歌詞`,
+'数字・単位':`하나=1（固有語）|둘=2（固有語）|셋=3（固有語）|넷=4（固有語）|다섯=5（固有語）|여섯=6（固有語）|일곱=7（固有語）|여덟=8（固有語）|아홉=9（固有語）|열=10（固有語）|스물=20（固有語）|서른=30（固有語）|마흔=40（固有語）|쉰=50（固有語）|예순=60（固有語）|일흔=70（固有語）|여든=80（固有語）|아흔=90（固有語）|영=ゼロ=零|공=ゼロ（電話番号など）・ボール=空|일=1（漢数詞）=一|이=2（漢数詞）=二|삼=3（漢数詞）=三|사=4（漢数詞）=四|오=5（漢数詞）=五|육=6（漢数詞）=六|칠=7（漢数詞）=七|팔=8（漢数詞）=八|구=9（漢数詞）=九|십=10（漢数詞）=十|백=百=百|천=千=千|만=1万=万|십만=10万=十万|백만=100万=百万|억=1億=億|개=〜個=個|명=〜人（めい）=名|마리=〜匹・〜頭|권=〜冊=巻|장=〜枚=張|병=〜本（瓶）=瓶|잔=〜杯|대=〜台=台|살=〜歳|그릇=〜杯（器）|번=〜回・〜番=番|켤레=〜足（くつ・靴下）|벌=〜着|송이=〜輪・〜房|채=〜軒|킬로그램=キログラム|그램=グラム|미터=メートル|센티미터=センチメートル|킬로미터=キロメートル|리터=リットル|첫째=1番目|둘째=2番目|셋째=3番目|번째=〜番目|정도=〜くらい・程度=程度|몇=いくつ・何〜|얼마=いくら|전부=*全部|절반=半分=折半|이상=*以上|이하=*以下|퍼센트=パーセント|인분=〜人前=人分`,
+'代名詞・疑問詞':`나=僕・私（タメ口）|저=私（へりくだり）|너=君・お前|당신=あなた|우리=私たち|저희=私ども|그=彼・その|그녀=彼女|이분=この方|그분=その方|저분=あの方|누구=誰|이것=これ|그것=それ|저것=あれ|이거=これ（話し言葉）|그거=それ（話し言葉）|저거=あれ（話し言葉）|무엇=何|뭐=何（話し言葉）|어디=どこ|언제=いつ|왜=なぜ|어떻게=どのように|어느=どの|어떤=どんな|무슨=何の|얼마나=どれくらい|아무=誰も・何の〜も|아무것=何も|누군가=誰か|모두=みんな・全部|자기=自分=自己`,
+'動詞':`가다=行く|오다=来る|먹다=食べる|마시다=飲む|보다=見る|듣다=聞く|말하다=話す・言う|읽다=読む|쓰다=書く・使う・（帽子を）かぶる|하다=する|자다=寝る|일어나다=起きる|앉다=座る|서다=立つ|걷다=歩く|뛰다=走る・跳ぶ|달리다=走る|놀다=遊ぶ|일하다=働く|공부하다=勉強する=工夫|배우다=習う・学ぶ|가르치다=教える|알다=知る・わかる|모르다=知らない・わからない|살다=住む・生きる|죽다=死ぬ|사다=買う|팔다=売る|주다=あげる・くれる|받다=もらう|드리다=差し上げる|만나다=会う|기다리다=待つ|찾다=探す・見つける・（お金を）おろす|잃어버리다=なくす|잊어버리다=忘れてしまう|잊다=忘れる|기억하다=覚えている=記憶|생각하다=考える・思う|좋아하다=好きだ|싫어하다=嫌いだ|사랑하다=愛する|웃다=笑う|울다=泣く|열다=開ける|닫다=閉める|켜다=（電気を）つける|끄다=消す|입다=着る|벗다=脱ぐ|신다=履く|끼다=（指輪・眼鏡を）はめる・かける|씻다=洗う|감다=（髪を）洗う・（目を）閉じる|닦다=拭く・磨く|타다=乗る・燃える|내리다=降りる・降る|갈아타다=乗り換える|들어가다=入っていく|들어오다=入ってくる|나가다=出ていく|나오다=出てくる|올라가다=上がっていく|내려가다=下りていく|돌아가다=帰っていく|돌아오다=帰ってくる|다니다=通う|건너다=渡る|지나다=過ぎる・通る|도착하다=到着する=到着|출발하다=出発する=出発|떠나다=去る・発つ|보내다=送る・過ごす|부르다=呼ぶ・歌う|노래하다=歌う|춤추다=踊る|그리다=描く|만들다=作る|요리하다=料理する=料理|굽다=焼く|끓이다=沸かす・煮る|자르다=切る|넣다=入れる|꺼내다=取り出す|놓다=置く|두다=置く・置いておく|들다=持つ・持ち上げる|걸다=掛ける・（電話を）かける|걸리다=（時間が）かかる・（風邪を）ひく|빌리다=借りる|빌려주다=貸す|갚다=返す（借金）|바꾸다=変える・交換する|고르다=選ぶ|고치다=直す|시작하다=始める=始作|끝나다=終わる|끝내다=終える|마치다=終える|쉬다=休む|운동하다=運動する=運動|수영하다=泳ぐ=水泳|여행하다=旅行する=旅行|구경하다=見物する|산책하다=散歩する=散策|청소하다=掃除する=清掃|빨래하다=洗濯する|설거지하다=皿洗いをする|전화하다=電話する=電話|이야기하다=話す|대답하다=答える=対答|질문하다=質問する=質問|묻다=尋ねる|설명하다=説明する=説明|연습하다=練習する=練習|준비하다=準備する=準備|계획하다=計画する=計画|결정하다=決める=決定|결혼하다=結婚する=結婚|이사하다=引っ越す|졸업하다=卒業する=卒業|입학하다=入学する=入学|취직하다=就職する=就職|출근하다=出勤する=出勤|퇴근하다=退社する=退勤|예약하다=予約する=予約|주문하다=注文する=注文|계산하다=会計する・計算する=計算|이용하다=利用する=利用|사용하다=使用する=使用|돕다=助ける・手伝う|도와주다=手伝ってあげる|가지다=持つ|갖다=持つ|있다=ある・いる|없다=ない・いない|되다=なる|이다=〜だ・〜である|아니다=〜ではない|느끼다=感じる|믿다=信じる|바라다=願う|원하다=望む=願|약속하다=約束する=約束|초대하다=招待する=招待|축하하다=祝う=祝賀|소개하다=紹介する=紹介|인사하다=挨拶する=人事|부탁하다=頼む=付託|걱정하다=心配する|화내다=怒る|놀라다=驚く|싸우다=けんかする・戦う|이기다=勝つ|지다=負ける・（日が）沈む|잡다=つかむ・捕まえる|던지다=投げる|치다=打つ・（楽器を）弾く|차다=蹴る|밀다=押す|당기다=引く|누르다=押す（ボタン）|버리다=捨てる|줍다=拾う|모으다=集める|세우다=止める・建てる|찍다=（写真を）撮る|보이다=見える|들리다=聞こえる|생기다=できる・生じる|나다=出る・起こる|늦다=遅れる・遅い|졸다=居眠りする|피우다=（タバコを）吸う|떨어지다=落ちる|넘어지다=転ぶ|다치다=けがをする|낫다=治る|변하다=変わる=変|늘다=増える|줄다=減る|오르다=上がる・登る|올리다=上げる・アップする|내다=出す・払う|열리다=開く|닫히다=閉まる|알리다=知らせる|가져가다=持っていく|가져오다=持ってくる|데려가다=連れていく|데려오다=連れてくる|모시다=お連れする・お仕えする|계시다=いらっしゃる|주무시다=お休みになる|드시다=召し上がる|잡수시다=召し上がる|돌아가시다=亡くなる|말씀하시다=おっしゃる|뵙다=お目にかかる|즐기다=楽しむ|신청하다=申し込む=申請|확인하다=確認する=確認|지키다=守る|따라가다=ついていく|맞다=合う・正しい|틀리다=間違う|정하다=決める=定|바르다=塗る|붙이다=貼る|이해하다=理解する=理解|노력하다=努力する=努力|실수하다=ミスする=失手|잘하다=上手だ|못하다=下手だ・できない|그만두다=やめる|계속하다=続ける=継続|만지다=触る|깨다=目覚める・割る|부치다=（郵便を）送る|싸다=包む|빨다=洗う（洗濯）|세수하다=顔を洗う=洗手|샤워하다=シャワーを浴びる|목욕하다=入浴する=沐浴|화장하다=化粧する=化粧|외우다=覚える・暗記する|번역하다=翻訳する=翻訳|대화하다=会話する=対話|사귀다=付き合う|헤어지다=別れる|태어나다=生まれる|자라다=育つ|키우다=育てる・飼う|기르다=育てる・飼う|심다=植える|피다=咲く|불다=吹く|그치다=やむ|어울리다=似合う|고장나다=故障する=故障|막히다=詰まる・渋滞する|흐르다=流れる|올라오다=上がってくる|내려오다=下りてくる|달라지다=変わる|좋아지다=良くなる|나빠지다=悪くなる|구하다=求める・救う=求|빠지다=落ちる・抜ける|남다=残る|남기다=残す|놓치다=逃す|챙기다=準備する・用意する|전하다=伝える=伝|비우다=空ける|채우다=満たす|씹다=噛む|섞다=混ぜる|볶다=炒める|튀기다=揚げる|썰다=切る（薄く）|꺼지다=消える|옮기다=移す・運ぶ|움직이다=動く|돌다=回る|돌리다=回す|지내다=過ごす|쓰이다=使われる|그만하다=やめる|기도하다=祈る=祈祷|선택하다=選択する=選択|참다=我慢する|숨다=隠れる|찾아가다=訪ねていく|찾아오다=訪ねてくる|방문하다=訪問する=訪問|안내하다=案内する=案内|운전하다=運転する=運転|주차하다=駐車する=駐車|길을 잃다=道に迷う`,
+'形容詞':`좋다=良い|나쁘다=悪い|크다=大きい|작다=小さい|많다=多い|적다=少ない|길다=長い|짧다=短い|높다=高い|낮다=低い|넓다=広い|좁다=狭い|무겁다=重い|가볍다=軽い|빠르다=速い|느리다=遅い|덥다=暑い|춥다=寒い|따뜻하다=暖かい|시원하다=涼しい|차갑다=冷たい|뜨겁다=熱い|맑다=晴れている・澄んでいる|흐리다=曇っている|밝다=明るい|어둡다=暗い|비싸다=（値段が）高い|싸다=安い|쉽다=易しい|어렵다=難しい|재미있다=面白い|재미없다=つまらない|맛있다=おいしい|맛없다=まずい|멋있다=かっこいい|예쁘다=きれいだ・かわいい|귀엽다=かわいい|아름답다=美しい|잘생기다=ハンサムだ|못생기다=不細工だ|젊다=若い|어리다=幼い|늙다=年を取る|바쁘다=忙しい|한가하다=暇だ=閑暇|피곤하다=疲れている=疲困|배고프다=お腹がすいた|배부르다=お腹がいっぱいだ|목마르다=のどが渇いた|졸리다=眠い|아프다=痛い・具合が悪い|건강하다=健康だ=健康|기쁘다=うれしい|슬프다=悲しい|즐겁다=楽しい|행복하다=幸せだ=幸福|외롭다=寂しい|무섭다=怖い|부끄럽다=恥ずかしい|반갑다=（会えて）うれしい|고맙다=ありがたい|미안하다=すまない|괜찮다=大丈夫だ|같다=同じだ|다르다=違う|비슷하다=似ている|친절하다=親切だ=親切|조용하다=静かだ|시끄럽다=うるさい|깨끗하다=きれいだ（清潔）|더럽다=汚い|편하다=楽だ=便|편리하다=便利だ=便利|불편하다=不便だ・居心地が悪い=不便|복잡하다=複雑だ・混んでいる=複雑|간단하다=簡単だ=簡単|유명하다=有名だ=有名|중요하다=重要だ=重要|필요하다=必要だ=必要|충분하다=十分だ=充分|특별하다=特別だ=特別|이상하다=変だ=異常|심심하다=退屈だ|똑똑하다=賢い|착하다=優しい・善良だ|부지런하다=勤勉だ|게으르다=怠けている|날씬하다=スリムだ|뚱뚱하다=太っている|맵다=辛い|짜다=しょっぱい|달다=甘い|시다=すっぱい|쓰다=苦い|싱겁다=味が薄い|고소하다=香ばしい|새롭다=新しい|가깝다=近い|멀다=遠い|이르다=早い|힘들다=大変だ・きつい|강하다=強い=強|약하다=弱い=弱|부드럽다=柔らかい|딱딱하다=硬い|두껍다=厚い|얇다=薄い|위험하다=危険だ=危険|안전하다=安全だ=安全|훌륭하다=立派だ|대단하다=すごい|소중하다=大切だ|친하다=親しい=親|그립다=恋しい|궁금하다=気になる|아쉽다=残念だ・惜しい|답답하다=もどかしい・息苦しい|빨갛다=赤い|파랗다=青い|노랗다=黄色い|하얗다=白い|까맣다=黒い|이렇다=こうだ|그렇다=そうだ|어떻다=どうだ|신기하다=不思議だ・珍しい=神奇|자유롭다=自由だ=自由|정확하다=正確だ=正確|급하다=急いでいる=急|화려하다=華やかだ=華麗|단순하다=単純だ=単純|상쾌하다=爽快だ=爽快|귀찮다=面倒だ|싫다=嫌だ|가능하다=可能だ=可能|불가능하다=不可能だ=不可能|깊다=深い|얕다=浅い|둥글다=丸い|진하다=濃い|연하다=薄い・柔らかい`,
+'副詞・接続詞':`아주=とても|매우=非常に|너무=あまりに・とても|정말=本当に|진짜=本当に|참=本当に・実に|꽤=かなり|조금=少し|좀=ちょっと|많이=たくさん|더=もっと|덜=より少なく|가장=最も|제일=いちばん=第一|잘=よく・上手に|못=〜できない|안=〜しない|다=全部|같이=一緒に|함께=共に|혼자=一人で|또=また|다시=再び|자주=よく・しばしば|가끔=たまに|항상=いつも=恒常|늘=いつも|언제나=いつでも|보통=普通・ふだん=普通|벌써=もう|이미=すでに|아직=まだ|곧=すぐに・まもなく|먼저=先に|나중에=後で|빨리=早く|천천히=ゆっくり|일찍=早く（時間）|늦게=遅く|열심히=一生懸命=熱心|갑자기=急に|계속=ずっと=継続|특히=特に=特|아마=たぶん|꼭=必ず|반드시=必ず|거의=ほとんど|전혀=全然=全|별로=あまり（〜ない）=別|그냥=ただ・なんとなく|서로=互いに|직접=直接・自分で=直接|바로=すぐ・まさに|마침=ちょうど|가득=いっぱい|깜짝=びっくり|오래=長く|오랫동안=長い間|잘못=間違って|대부분=*大部分|약간=若干・少し=若干|훨씬=ずっと（比較）|점점=だんだん=漸漸|아무리=いくら〜ても|혹시=もしかして=或是|물론=もちろん=勿論|푹=ぐっすり・ゆっくり|조용히=静かに|자세히=詳しく=仔細|똑바로=まっすぐ|쭉=ずっと・まっすぐ|따로=別々に|새로=新しく|처음으로=初めて|마음대로=勝手に・好きなように|그리고=そして|그래서=それで|그러나=しかし|그런데=ところで・でも|하지만=でも|그러면=それなら|그럼=じゃあ|또는=または|그래도=それでも|왜냐하면=なぜなら|그러니까=だから|그렇지만=けれども|그러므로=したがって|예를 들면=例えば|즉=つまり=即`,
+'助詞':`은/는=〜は|이/가=〜が|을/를=〜を|에=〜に（時・場所）|에서=〜で（動作の場所）・〜から|의=〜の|도=〜も|만=〜だけ|와/과=〜と|하고=〜と（話し言葉）|(이)랑=〜と（くだけた言い方）|부터=〜から（時間・順序）|까지=〜まで|에게=〜に（人）|한테=〜に（人・話し言葉）|께=〜に（敬語）|에게서=〜から（人）|한테서=〜から（人・話し言葉）|(으)로=〜で（手段）・〜へ（方向）|보다=〜より|처럼=〜のように|마다=〜ごとに|밖에=〜しか|(이)나=〜か・〜も（数量）|께서=〜が（敬語）|께서는=〜は（敬語）|요=〜です（丁寧の語尾）`
+};
+
+/* build list */
+const WORDS=[]; const seen=new Set(); const TOPICS=Object.keys(VOCAB);
+TOPICS.forEach(t=>{ VOCAB[t].split('|').forEach(p=>{ const parts=p.split('='); if(parts.length<2) return; const k=parts[0].trim(); let m=parts[1].trim(), hj=(parts[2]||'').trim(); if(m.startsWith('*')){ m=m.slice(1); hj=m; } const key=t+'·'+k; if(seen.has(key)) return; seen.add(key); WORDS.push({k,m,hj,t}); }); });
+const UNIQUE=new Set(WORDS.map(w=>w.k)).size;
+
+let known=new Set();
+function saveKnown(){ persist(); }
+
+let curTopic='すべて', query='', limit=120;
+const chipsEl=$('#chips');
+['すべて',...TOPICS].forEach(t=>{ const c=h('button','chip'+(t==='すべて'?' on':'')); c.type='button'; c.dataset.t=t; c.append(document.createTextNode(t)); c.append(h('i',null,t==='すべて'?UNIQUE:WORDS.filter(w=>w.t===t).length)); c.onclick=()=>{ curTopic=t; limit=120; chipsEl.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x.dataset.t===t)); render(); nextFlash(); }; chipsEl.append(c); });
+
+function filtered(){
+  const q=query.trim().toLowerCase(); const hideKnown=$('#vKnown').checked, onlyHj=$('#vHanja').checked;
+  let list=WORDS.filter(w=>curTopic==='すべて'||w.t===curTopic);
+  if(curTopic==='すべて'){ const s=new Set(); list=list.filter(w=>{ if(s.has(w.k)) return false; s.add(w.k); return true; }); }
+  if(q) list=list.filter(w=>w.k.toLowerCase().includes(q)||w.m.toLowerCase().includes(q)||w.hj.includes(q));
+  if(onlyHj) list=list.filter(w=>w.hj);
+  if(hideKnown) list=list.filter(w=>!known.has(w.k));
+  return list;
+}
+function render(){
+  const list=filtered(); const g=$('#vgrid'); g.textContent='';
+  const frag=document.createDocumentFragment();
+  list.slice(0,limit).forEach(w=>{
+    const d=h('div','w'+(known.has(w.k)?' known':''));
+    const k=h('button','k',w.k); k.type='button'; k.lang='ko'; k.onclick=()=>speak(w.k);
+    const m=h('div','m',w.m); if(w.hj){ const b=h('span','hj',w.hj); b.title='漢字語'; m.append(b); } m.onclick=()=>m.classList.toggle('show');
+    const done=h('button','done','✓'); done.type='button'; done.setAttribute('aria-label',w.k+' を覚えた'); done.setAttribute('aria-pressed',known.has(w.k));
+    done.onclick=()=>{ if(known.has(w.k)) known.delete(w.k); else known.add(w.k); saveKnown(); if($('#vKnown').checked) render(); else { d.classList.toggle('known'); done.setAttribute('aria-pressed',known.has(w.k)); stat(list); } };
+    d.append(k,done,m); if(curTopic==='すべて') d.append(h('div','t',w.t));
+    frag.append(d);
+  });
+  g.append(frag);
+  const more=$('#vMore'); more.hidden=list.length<=limit; more.textContent=`もっと見る（残り ${Math.max(0,list.length-limit)}）`;
+  stat(list);
+}
+function stat(list){ $('#vstat').textContent=`${list.length.toLocaleString()} 語を表示 · 全 ${UNIQUE.toLocaleString()} 語中 ${known.size.toLocaleString()} 語を覚えた`; }
+$('#vMore').onclick=()=>{ limit+=240; render(); };
+let qt; $('#vq').addEventListener('input',e=>{ clearTimeout(qt); qt=setTimeout(()=>{ query=e.target.value; limit=120; render(); },180); });
+$('#vHide').addEventListener('change',e=>$('#topik').classList.toggle('hide-mean',e.target.checked));
+['#vKnown','#vHanja'].forEach(s=>$(s).addEventListener('change',()=>{ limit=120; render(); nextFlash(); }));
+render();
+
+/* flashcard */
+let fcur=null;
+function fmtMean(w){ return w.m+(w.hj&&w.hj!==w.m?'（'+w.hj+'）':''); }
+function nextFlash(){
+  let pool=filtered(); if(!pool.length) pool=WORDS;
+  const unk=pool.filter(w=>!known.has(w.k)); const src=unk.length?unk:pool;
+  fcur=src[Math.floor(Math.random()*src.length)];
+  const rev=$('#vRev').checked;
+  $('#fWord').textContent=rev?fmtMean(fcur):fcur.k; $('#fWord').lang=rev?'ja':'ko';
+  $('#fWord').style.fontSize=rev?'28px':'';
+  $('#fMean').textContent='';
+  $('#fCount').textContent=curTopic+' · '+src.length+' 語から';
+}
+$('#fNext').onclick=nextFlash;
+$('#fShow').onclick=()=>{ if(!fcur) return; $('#fMean').textContent=$('#vRev').checked?fcur.k:fmtMean(fcur); };
+$('#fSay').onclick=()=>{ if(fcur) speak(fcur.k); };
+$('#vRev').addEventListener('change',nextFlash);
+nextFlash();
+
+/* rail highlight */
+const links=[...document.querySelectorAll('#rail a')]; const railOl=$('#rail');
+const io=new IntersectionObserver(es=>{ es.forEach(e=>{ if(!e.isIntersecting) return; links.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+e.target.id)); const on=links.find(a=>a.classList.contains('on')); if(on){ railOl.scrollTo({left:on.parentElement.offsetLeft-16,behavior:'smooth'}); } }); },{rootMargin:'-40% 0px -55% 0px'});
+document.querySelectorAll('section.step').forEach(s=>io.observe(s));
+
+/* ---------- quizzes & step unlocking ---------- */
+const QN=10, PASS=8;
+const STEPS=['vowels','consonants','compound','batchim','topik'];
+const STEP_NAMES=['母音','子音','複合母音','パッチム','TOPIK I 単語'];
+let prog=emptyProg();
+function saveProg(){ persist(); }
+
+const rnd=n=>Math.floor(Math.random()*n);
+const pick=a=>a[rnd(a.length)];
+const shuffle=a=>{ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=rnd(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const syl=(c,j,k)=>String.fromCharCode(0xAC00+(c*21+j)*28+k);
+const canSpeak=()=>!!(synth&&koVoice);
+function mc(prompt,answer,pool,opts={}){ const ds=shuffle([...new Set(pool.filter(x=>x!==answer))]).slice(0,3); return Object.assign({prompt,answer,choices:shuffle([answer,...ds])},opts); }
+
+/* step 1: vowels */
+const QV=VOWELS.map(([g,n,r,k,hi])=>({g,n,r,k,hi}));
+function gen1(){
+  const v=pick(QV); const types=['g2r','r2g','syl','syl']; if(canSpeak()) types.push('listen','listen');
+  const t=pick(types);
+  if(t==='g2r') return mc(v.g,v.r,QV.map(x=>x.r),{sub:'この母音の読み方（ローマ字）は？',pk:true,after:v.n,explain:`${v.g} = ${v.r}（${v.k}）${v.hi?'　'+v.hi:''}`});
+  if(t==='r2g') return mc(`${v.r}（${v.k}${v.hi?'・'+v.hi:''}）`,v.g,QV.map(x=>x.g),{sub:'この音を表す母音はどれ？',ck:true,after:v.n,explain:`${v.r} は ${v.g}`});
+  if(t==='syl'){ const ci=pick([0,2,3,5,6,7,9,12,15,16,17,18]); const s=syl(ci,JUNG.indexOf(v.g),0); return mc(s,v.g,QV.map(x=>x.g),{sub:'この文字に使われている母音はどれ？',pk:true,ck:true,after:s,explain:`${s} = ${CHO[ci]} + ${v.g}`}); }
+  return mc('',v.g,QV.filter(x=>x.k!==v.k).map(x=>x.g),{sub:'音声を聞いて、正しい母音を選んでください',ck:true,say:v.n,explain:`${v.n}（${v.r}）でした`});
+}
+/* step 2: consonants */
+const QC=[...CONS.map(([g,n,r])=>({g,n,r})),...DBL.map(([g,n,r])=>({g,n,r}))];
+function gen2(){
+  const c=pick(QC); const types=['g2n','n2g','g2r','triad','triad']; if(canSpeak()) types.push('listen','listen');
+  const t=pick(types);
+  if(t==='g2n') return mc(c.g,c.n,QC.map(x=>x.n),{sub:'この子音の名前は？',pk:true,ck:true,after:c.n,explain:`${c.g} の名前は ${c.n}`});
+  if(t==='n2g') return mc(c.n,c.g,QC.map(x=>x.g),{sub:'この名前の子音はどれ？',pk:true,ck:true,after:c.n,explain:`${c.n} は ${c.g}`});
+  if(t==='g2r') return mc(c.g,c.r,QC.map(x=>x.r),{sub:'この子音の音（ローマ字）は？',pk:true,after:c.n,explain:`${c.g} = ${c.r}`});
+  const row=pick(TRIAD.slice(0,4)); const [kn,ki]=pick([['平音',1],['激音（息を強く出す音）',2],['濃音（「っ」の後のような音）',3]]); const ans=row[ki];
+  const ex=`${row[1]}＝平音、${row[2]}＝激音、${row[3]}＝濃音`;
+  if(t==='triad') return mc(kn+'はどれ？',ans,row.slice(1),{sub:'平音・激音・濃音',ck:true,after:ans,explain:ex});
+  return mc('',ans,row.slice(1),{sub:'音声を聞いて、正しい文字を選んでください',ck:true,say:ans,explain:`${ans} でした（${ex}）`});
+}
+/* step 3: compound vowels */
+const QP=COMP.map(([g,n,r,k,f,ex,m])=>({g,n,r,k,f,ex,m}));
+function gen3(){
+  const c=pick(QP); const types=['f2g','f2g','g2r','g2f','word']; if(canSpeak()) types.push('listen');
+  const t=pick(types);
+  if(t==='f2g') return mc(c.f.replace('+',' + '),c.g,QP.map(x=>x.g),{sub:'2つの母音を合わせるとどれになる？',pk:true,ck:true,after:c.n,explain:`${c.f} = ${c.g}`});
+  if(t==='g2r') return mc(c.g,`${c.r}（${c.k}）`,QP.map(x=>`${x.r}（${x.k}）`),{sub:'この複合母音の読み方は？',pk:true,after:c.n,explain:`${c.g} = ${c.r}（${c.k}）`});
+  if(t==='g2f') return mc(c.g,c.f,QP.map(x=>x.f),{sub:'どの母音を合わせたもの？',pk:true,ck:true,after:c.n,explain:`${c.g} = ${c.f}`});
+  if(t==='word') return mc(c.m,c.ex,QP.map(x=>x.ex),{sub:'意味に合う単語はどれ？',ck:true,after:c.ex,explain:`${c.ex} = ${c.m}`});
+  return mc('',c.g,QP.filter(x=>x.k!==c.k).map(x=>x.g),{sub:'音声を聞いて、正しい母音を選んでください',ck:true,say:c.n,explain:`${c.n}（${c.r}）でした`});
+}
+/* step 4: batchim */
+const REPMAP={}; REP.forEach(([r,letters])=>letters.split(' ').forEach(l=>REPMAP[l]=r));
+const REPS=REP.map(x=>x[0]);
+const PRON=[['옷이','오시',['오치','옫이','오디']],['책을','채글',['책글','채클','채걸']],['음악','으막',['음막','으낙','음각']],['합니다','함니다',['합니다','한니다','핟니다']],['국물','궁물',['국물','굼물','구물']],['끝나다','끈나다',['끋나다','끝나다','끔나다']],['학교','학꾜',['학교','하꾜','학쿄']],['식당','식땅',['식당','시당','식탕']],['좋다','조타',['좋다','조다','졷따']],['축하','추카',['축하','추가','축까']],['좋아요','조아요',['조하요','좋아요','졷아요']],['많이','마니',['만히','만이','만치']],['신라','실라',['신나','신라','시나']],['연락','열락',['연낙','연락','여락']],['같이','가치',['가티','같이','가지']],['닭이','달기',['다기','닥이','달이']],['앉아요','안자요',['아나요','안아요','안차요']],['값','갑',['감','갓','각']],['여덟','여덜',['여덥','여더','여덜브']],['읽다','익따',['일따','읽다','이따']],['맛있어요','마시써요',['마디써요','맛이써요','마시어요']],['한국어','한구거',['한국어','항구거','한구커']],['입학','이팍',['입박','이박','입학']],['감사합니다','감사함니다',['감사합니다','감사한니다','감삼니다']],['꽃이','꼬치',['꼬시','꼳이','꼬디']],['밥만','밤만',['밥만','반만','바만']]];
+function gen4(){
+  const t=pick(['rep','rep','pron','pron','pron','build']);
+  if(t==='rep'){ const L=pick(Object.keys(REPMAP)); const s=syl(pick([0,2,3,6,7,9,11,12,18]),pick([0,4,8,13,20]),JONG.indexOf(L)); const r=REPMAP[L]; return mc(s,r,REPS,{sub:'このパッチムは何の音で発音する？（代表音）',pk:true,ck:true,after:s,explain:`${s} のパッチム ${L} は [${r}] で発音します`}); }
+  if(t==='pron'){ const [w,p,ds]=pick(PRON); return {prompt:w,answer:p,choices:shuffle([p,...ds]),sub:'実際の発音はどれ？',pk:true,ck:true,after:w,explain:`${w} → [${p}]`}; }
+  const ks=[0,1,4,8,16,17,21]; const c=rnd(19),j=rnd(21),k=pick(ks); const ans=syl(c,j,k); const vars=new Set(); let g=0;
+  while(vars.size<3 && g++<60){ const m=rnd(3); const v=m===0?syl(rnd(19),j,k):m===1?syl(c,rnd(21),k):syl(c,j,pick(ks)); if(v!==ans) vars.add(v); }
+  return {prompt:`${CHO[c]} + ${JUNG[j]}${k?' + '+JONG[k]:''}`,answer:ans,choices:shuffle([ans,...vars]),sub:'組み立てるとどの文字になる？',pk:true,ck:true,after:ans,explain:`${CHO[c]} + ${JUNG[j]}${k?' + '+JONG[k]:''} = ${ans}`};
+}
+/* step 5: vocabulary */
+function gen5(){
+  const pool=WORDS.filter(w=>w.t!=='助詞'&&w.t!=='あいさつ・表現'); const w=pick(pool);
+  const same=pool.filter(x=>x.t===w.t&&x.m!==w.m&&x.k!==w.k); const src=same.length>=3?same:pool.filter(x=>x.m!==w.m&&x.k!==w.k);
+  const t=pick(['k2m','k2m','m2k',w.hj?'hj':'m2k']);
+  if(t==='k2m') return mc(w.k,w.m,src.map(x=>x.m),{sub:'この単語の意味は？',pk:true,after:w.k,explain:`${w.k} = ${fmtMean(w)}`});
+  if(t==='hj'){ const hs=src.filter(x=>x.hj); return mc(w.hj,w.k,(hs.length>=3?hs:src).map(x=>x.k),{sub:'この漢字語は韓国語で？',ck:true,after:w.k,explain:`${w.hj} = ${w.k}（${w.m}）`}); }
+  return mc(w.m,w.k,src.map(x=>x.k),{sub:'韓国語でどう言う？',ck:true,after:w.k,explain:`${w.m} = ${w.k}`});
+}
+const GENS=[gen1,gen2,gen3,gen4,gen5];
+
+function isOpen(i){ return i===0||teacherMode||!!prog.passed[i-1]; }
+const LOCK_SVG='<svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path fill="currentColor" d="M4 7V5a4 4 0 0 1 8 0v2h1v8H3V7h1zm2 0h4V5a2 2 0 0 0-4 0v2z"/></svg>';
+function goTo(id){ const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
+
+function makeQuiz(si){
+  const box=h('div','quiz'); box.id='quiz-'+STEPS[si];
+  let qs=[],i=0,score=0,wrong=[];
+  function head(title){ const hd=h('div','qh'); hd.append(h('div','qt',title)); return hd; }
+  function intro(){
+    box.textContent='';
+    box.append(head(`ステップ${si+1} 確認クイズ`));
+    box.append(h('p','qdesc',si<4?`${QN}問中${PASS}問以上正解で合格です。合格すると次のステップ「${STEP_NAMES[si+1]}」が開きます。`:`${QN}問中${PASS}問以上正解で修了です。何度でも挑戦できます。`));
+    const st=h('p','qbest'); const best=prog.best[si];
+    if(prog.passed[si]){ st.append(h('span','badge ok','合格済み')); }
+    st.append(document.createTextNode(best!=null?`ベストスコア ${best} / ${QN}`:'まだ挑戦していません'));
+    box.append(st);
+    const b=h('button','btn','クイズを始める'); b.type='button'; b.onclick=start; const row=h('div','row'); row.append(b); box.append(row);
+  }
+  function start(){
+    if(!nick){ askNick(); return; }
+    qs=[]; const keys=new Set(); let g=0;
+    while(qs.length<QN && g++<400){ const q=GENS[si](); const key=q.prompt+'|'+q.answer+'|'+(q.say||''); if(keys.has(key)||q.choices.length<2) continue; keys.add(key); qs.push(q); }
+    i=0; score=0; wrong=[]; show(); box.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  function show(){
+    const q=qs[i]; box.textContent='';
+    const hd=head(`ステップ${si+1} 確認クイズ`); hd.append(h('div','qmeta',`${i+1} / ${QN}　正解 ${score}`)); box.append(hd);
+    const bar=h('div','bar'); const fill=h('i'); fill.style.width=(i/QN*100)+'%'; bar.append(fill); box.append(bar);
+    box.append(h('div','qsub',q.sub));
+    if(q.say){ const lb=h('button','btn ghost listen','▶ 音声を聞く'); lb.type='button'; lb.onclick=()=>speak(q.say); box.append(lb); setTimeout(()=>speak(q.say),250); }
+    else { const p=h('div','qp'+(q.pk?' ko':''),q.prompt); if(q.pk) p.lang='ko'; box.append(p); }
+    const long=q.choices.some(c=>c.length>9);
+    const grid=h('div','choices'+(long?' long':''));
+    const fb=h('div','fb'); const next=h('button','btn next',i<QN-1?'次の問題':'結果を見る'); next.type='button'; next.hidden=true;
+    q.choices.forEach(c=>{ const b=h('button','ch'+(q.ck?' ko':''),c); b.type='button'; if(q.ck) b.lang='ko';
+      b.onclick=()=>{
+        grid.querySelectorAll('button').forEach(x=>{ x.disabled=true; if(x.textContent===q.answer) x.classList.add('ok'); });
+        if(c===q.answer){ score++; fb.innerHTML=''; fb.append(h('b','ok','正解！ ')); }
+        else { b.classList.add('ng'); wrong.push(q); fb.innerHTML=''; fb.append(h('b','ng','不正解　')); fb.append(document.createTextNode('正解は '+q.answer+'　')); }
+        if(q.explain) fb.append(h('span','ex',q.explain));
+        if(q.after) speak(q.after);
+        box.querySelector('.qmeta').textContent=`${i+1} / ${QN}　正解 ${score}`;
+        next.hidden=false; next.focus({preventScroll:true});
+      }; grid.append(b); });
+    next.onclick=()=>{ i++; if(i<QN) show(); else finish(); };
+    box.append(grid,fb); const row=h('div','row'); row.append(next); box.append(row);
+  }
+  function finish(){
+    const pass=score>=PASS; const wasPassed=!!prog.passed[si];
+    prog.best[si]=Math.max(prog.best[si]||0,score); if(pass) prog.passed[si]=true; saveProg(); applyLocks();
+    box.textContent=''; box.append(head(`ステップ${si+1} 結果`));
+    const sc=h('div','result'+(pass?' pass':' fail')); sc.append(h('div','score',`${score} / ${QN}`));
+    let msg;
+    if(pass) msg = si<4 ? (wasPassed?'合格です！':`合格です！ステップ${si+2}「${STEP_NAMES[si+1]}」が開きました。`) : 'おめでとうございます！すべてのステップを修了しました。';
+    else msg=`合格まであと${PASS-score}問です。カードや表を見直してから、もう一度挑戦しましょう。`;
+    sc.append(h('p','rmsg',msg)); box.append(sc);
+    if(wrong.length){ box.append(h('div','qsub','間違えた問題')); const ul=h('ul','wrong'); wrong.forEach(q=>{ const li=h('li'); li.append(h('span','wq',q.prompt||('音声：'+q.say))); li.append(document.createTextNode(' → ')); const a=h('b',null,q.answer); if(q.ck) a.lang='ko'; li.append(a); if(q.explain) li.append(h('span','ex',q.explain)); ul.append(li); }); box.append(ul); }
+    box.append(reportBlock(si,score,pass));
+    const row=h('div','row');
+    if(pass && si<4){ const nb=h('button','btn',`ステップ${si+2}へ進む`); nb.type='button'; nb.onclick=()=>goTo(STEPS[si+1]); row.append(nb); }
+    if(!pass){ const rv=h('button','btn',`ステップ${si+1}を復習する`); rv.type='button'; rv.onclick=()=>goTo(STEPS[si]); row.append(rv); }
+    const again=h('button','btn ghost','もう一度挑戦'); again.type='button'; again.onclick=start; row.append(again);
+    box.append(row);
+  }
+  intro();
+  return box;
+}
+
+/* wrap each step: body + lock panel + quiz */
+document.querySelectorAll('section.step').forEach((sec,si)=>{
+  const headEl=sec.querySelector('.step-head');
+  const body=h('div','step-body'); [...sec.children].filter(c=>c!==headEl).forEach(c=>body.append(c)); sec.append(body);
+  const quiz=makeQuiz(si);
+  if(si===4) body.insertBefore(quiz,body.querySelector('.vtools')); else body.append(quiz);
+  const jump=h('a','quiz-jump','確認クイズへ ↓'); jump.href='#quiz-'+STEPS[si]; headEl.lastElementChild.append(jump);
+  if(si>0){
+    const lp=h('div','lock-panel'); const ic=h('div','lock-ic'); ic.innerHTML=LOCK_SVG.replace(/width="11" height="11"/,'width="26" height="26"');
+    const tx=h('div'); tx.append(h('p','lt','このステップはまだ開いていません'));
+    tx.append(h('p',null,`ステップ${si}「${STEP_NAMES[si-1]}」の確認クイズで${QN}問中${PASS}問以上正解すると開きます。`));
+    const b=h('button','btn',`ステップ${si}のクイズへ`); b.type='button'; b.onclick=()=>goTo('quiz-'+STEPS[si-1]); const r=h('div','row'); r.append(b); tx.append(r);
+    lp.append(ic,tx); sec.append(lp);
+  }
+});
+
+function applyLocks(){
+  STEPS.forEach((id,i)=>{
+    const open=isOpen(i); document.getElementById(id).classList.toggle('locked',!open);
+    const a=links[i], sp=a.querySelector('span');
+    a.classList.toggle('locked',!open); a.classList.toggle('done',!!prog.passed[i]);
+    if(prog.passed[i]) sp.textContent='✓'; else if(!open) sp.innerHTML=LOCK_SVG; else sp.textContent=i+1;
+  });
+  teacherBtn.textContent=teacherMode?'先生用：ロックを元に戻す':'先生用：すべてのステップを開く';
+}
+
+/* teacher / reset controls */
+const ctl=h('div','ctl'); const teacherBtn=h('button','btn ghost sm'); teacherBtn.type='button'; teacherBtn.hidden=true;
+teacherBtn.onclick=()=>{ teacherMode=!teacherMode; lsSet('hangul-teacher',teacherMode?'1':'0'); applyLocks(); };
+const RESET_LABEL='この学習者の記録をリセット';
+const resetBtn=h('button','btn ghost sm',RESET_LABEL); resetBtn.type='button'; let armed=false;
+resetBtn.onclick=()=>{ if(!nick) return; if(!armed){ armed=true; resetBtn.textContent=`「${nick}」の記録を消しますか？もう一度押してください`; setTimeout(()=>{ armed=false; resetBtn.textContent=RESET_LABEL; },4000); return; }
+  prog=emptyProg(); known=new Set(); saveProg(); armed=false; resetBtn.textContent='リセットしました'; refreshAll(); };
+ctl.append(teacherBtn,resetBtn); document.querySelector('footer').append(ctl);
+
+/* ---------- nickname, local saving, restore ID ---------- */
+function emptyProg(){ return {passed:{},best:{}}; }
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function parseJ(s,d){ try{ return s?JSON.parse(s):d; }catch(e){ return d; } }
+let nick='', teacherMode=lsGet('hangul-teacher')==='1', isTeacher=false;
+const ART_URL='https://renatusauctor.github.io/hangul-topik/';
+
+function loadLocal(n){ const p=parseJ(lsGet('hangul-progress:'+n),{}); prog={passed:p.passed||{},best:p.best||{}}; known=new Set(parseJ(lsGet('topik1-known:'+n),[])); }
+function persist(){ if(!nick) return; lsSet('hangul-progress:'+nick,JSON.stringify(prog)); lsSet('topik1-known:'+nick,JSON.stringify([...known])); updateNickUI(); }
+
+/* restore code: 5 chars = step best scores + checksum tied to the nickname */
+const B32='0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+function hash6(s){ let x=7; for(const ch of s){ x=(Math.imul(x,31)+ch.codePointAt(0))>>>0; } return x&63; }
+function makeCode(n,p){ let v=0; for(let i=4;i>=0;i--){ const b=p.best[i]; v=v*12+(b==null?0:Math.min(10,+b)+1); } let y=v*64+hash6(n+':'+v), s=''; for(let i=0;i<5;i++){ s=B32[y%32]+s; y=Math.floor(y/32); } return s; }
+function normCode(c){ return String(c).toUpperCase().replace(/O/g,'0').replace(/[IL]/g,'1').replace(/[^0-9A-Z]/g,''); }
+function readCode(n,c){ c=normCode(c); if(c.length!==5) return null; let x=0; for(const ch of c){ const k=B32.indexOf(ch); if(k<0) return null; x=x*32+k; }
+  const chk=x%64, v=Math.floor(x/64); if(v>=248832||hash6(n+':'+v)!==chk) return null;
+  const best={}; let y=v; for(let i=0;i<5;i++){ const d=y%12; y=Math.floor(y/12); if(d) best[i]=d-1; } return best; }
+function b32enc(str){ const bytes=new TextEncoder().encode(str); let bits=0,val=0,out=''; for(const b of bytes){ val=(val<<8)|b; bits+=8; while(bits>=5){ out+=B32[(val>>>(bits-5))&31]; bits-=5; } val&=(1<<bits)-1; } if(bits>0) out+=B32[(val<<(5-bits))&31]; return out; }
+function b32dec(s){ let bits=0,val=0; const out=[]; for(const ch of s){ const k=B32.indexOf(ch); if(k<0) return null; val=(val<<5)|k; bits+=5; if(bits>=8){ out.push((val>>>(bits-8))&255); bits-=8; } val&=(1<<bits)-1; } try{ return new TextDecoder('utf-8',{fatal:true}).decode(new Uint8Array(out)); }catch(e){ return null; } }
+function myIdStr(){ return nick+'-'+makeCode(nick,prog); }
+function restoreLink(){ return ART_URL+'#r-'+b32enc(nick)+'-'+makeCode(nick,prog); }
+function parseId(s){ s=String(s||'').trim().replace(/[－―ー‐]\s*([0-9A-Za-z]{5})\s*$/,'-$1'); const i=s.lastIndexOf('-'); if(i<1) return null; const n=s.slice(0,i).trim().slice(0,20), best=readCode(n,s.slice(i+1)); return best?{n,best}:null; }
+
+function copyText(t,btn){
+  const done=()=>{ const o=btn.textContent; btn.textContent='コピーしました'; setTimeout(()=>btn.textContent=o,1500); };
+  const fallback=()=>{ const ta=h('textarea'); ta.value=t; ta.style.cssText='position:fixed;opacity:0;top:0;left:0'; document.body.append(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(e){} ta.remove(); };
+  try{ navigator.clipboard.writeText(t).then(done,fallback); }catch(e){ fallback(); }
+}
+function lineSelfUrl(){ return 'https://line.me/R/share?text='+encodeURIComponent(`ハングルからTOPIKまで\n${nick} さんの復元ID：${myIdStr()}\n復元リンク（タップすると続きから）：\n${restoreLink()}`); }
+
+/* Google Form: paste the form's 「事前入力したURL」 here (questions in order: ニックネーム / ステップ / 点数 / 復元ID) */
+const FORM_PREFILL='https://docs.google.com/forms/d/e/1FAIpQLSfzgenzt5ZaW3VBFyNDz8K16E173laDoT2e-Vi5InGud2I5ig/viewform?usp=pp_url&entry.1263611933=a&entry.1578994305=b&entry.1064446650=c&entry.1932379845=d';
+function formUrl(si,score){
+  if(!FORM_PREFILL) return '';
+  try{ const u=new URL(FORM_PREFILL); const keys=[...u.searchParams.keys()].filter(k=>k.startsWith('entry.'));
+    const vals=[nick,`ステップ${si+1} ${STEP_NAMES[si]}`,`${score}/${QN}`,myIdStr()];
+    keys.forEach((k,i)=>{ if(i<vals.length) u.searchParams.set(k,vals[i]); }); u.searchParams.set('usp','pp_url'); return u.toString(); }catch(e){ return ''; }
+}
+function reportBlock(si,score,pass){
+  const wrap=h('div','report');
+  wrap.append(h('div','qsub','あなたの復元ID（別の端末で続けるときに使います）'));
+  const line=h('div','idline'); line.append(h('b','idv',myIdStr())); const cp=h('button','btn ghost sm','コピー'); cp.type='button'; cp.onclick=()=>copyText(myIdStr(),cp); line.append(cp); wrap.append(line);
+  const row=h('div','row'); const fu=formUrl(si,score);
+  if(fu && pass){ const a=h('a','btn','記録を保存する'); a.href=fu; a.target='_blank'; a.rel='noopener'; row.append(a); }
+  const ls=h('a','btn ghost','LINEで自分に送る（保存用）'); ls.href=lineSelfUrl(); ls.target='_blank'; ls.rel='noopener'; row.append(ls);
+  wrap.append(row);
+  if(fu && pass) wrap.append(h('p','smallnote','「記録を保存する」を押したら、開いたフォームの「送信」を押してください。'));
+  return wrap;
+}
+
+function setSync(msg,cls){
+  const el=$('#syncState'); el.className='sync'+(cls?' '+cls:'');
+  if(msg){ el.textContent=msg; return; }
+  el.textContent=nick?'記録はこの端末に保存されています。別の端末で続けるときは、復元IDか「LINEで自分に送る」で保存したリンクを使ってください。':'ニックネームを入れると、学習の記録がその名前で保存されます。';
+}
+function updateNickUI(){
+  $('#nickForm').hidden=!!nick; $('#nickShow').hidden=!nick;
+  if(nick){ const n=Object.keys(prog.passed).filter(k=>prog.passed[k]).length; $('#nickHello').textContent=`${nick} さん　合格 ${n} / 5 ステップ`; $('#myId').textContent=myIdStr(); $('#idLine').href=lineSelfUrl(); }
+}
+function refreshAll(){ document.querySelectorAll('.quiz').forEach((q,si)=>q.replaceWith(makeQuiz(si))); applyLocks(); limit=120; render(); nextFlash(); updateNickUI(); setSync(); }
+function setNick(n){
+  n=(n||'').trim().slice(0,20); if(!n) return false;
+  if(lsGet('hangul-progress:'+n)==null && lsGet('hangul-progress')!=null){ /* records saved before nicknames existed */
+    const old=parseJ(lsGet('hangul-progress'),{}); lsSet('hangul-progress:'+n,JSON.stringify({passed:old.passed||{},best:old.best||{}})); lsSet('topik1-known:'+n,lsGet('topik1-known')||'[]');
+    try{ localStorage.removeItem('hangul-progress'); localStorage.removeItem('topik1-known'); }catch(e){} }
+  nick=n; lsSet('hangul-nick',n); loadLocal(n); refreshAll(); return true;
+}
+function restore(n,best){
+  setNick(n);
+  Object.keys(best).forEach(i=>{ prog.best[i]=Math.max(prog.best[i]||0,best[i]); if(prog.best[i]>=PASS) prog.passed[i]=true; });
+  persist(); refreshAll(); setSync(`✓ ${n} さんの記録を復元しました。`,'ok');
+}
+function checkHash(){
+  const m=/^#r-([0-9A-Z]+)-([0-9A-Z]{5})$/.exec(location.hash||''); if(!m) return false;
+  try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+  const n=b32dec(m[1]); const best=n&&readCode(n,m[2]);
+  if(!best){ refreshAll(); setSync('復元リンクが正しくありません。復元IDを入力してください。','warn'); return true; }
+  restore(n,best); return true;
+}
+function askNick(){ const l=$('#learner'); l.scrollIntoView({behavior:'smooth',block:'center'}); $('#nickForm').hidden=false; $('#nickShow').hidden=true; setTimeout(()=>$('#nick').focus({preventScroll:true}),400); l.classList.add('attn'); setTimeout(()=>l.classList.remove('attn'),1600); }
+$('#nickSave').onclick=()=>{ if(!setNick($('#nick').value)) $('#nick').focus(); };
+$('#nick').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); $('#nickSave').click(); } });
+$('#nickChange').onclick=()=>{ $('#nick').value=nick; $('#nickForm').hidden=false; $('#nickShow').hidden=true; $('#nick').focus(); };
+$('#restoreOpen').onclick=()=>{ const b=$('#restoreBox'); b.hidden=!b.hidden; if(!b.hidden) $('#rid').focus(); };
+$('#ridGo').onclick=()=>{ const r=parseId($('#rid').value); if(!r){ setSync('復元IDが正しくありません。「ニックネーム-英数字5文字」の形で入力してください。','warn'); $('#rid').focus(); return; } $('#rid').value=''; $('#restoreBox').hidden=true; restore(r.n,r.best); };
+$('#rid').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); $('#ridGo').click(); } });
+$('#idCopy').onclick=()=>copyText(myIdStr(),$('#idCopy'));
+window.addEventListener('hashchange',checkHash);
+
+/* LINE contact */
+const LINE_URL='https://line.me/ti/p/JTNrwIZPVE';
+function setupLine(){ const fab=$('#lineFab'), foot=$('#lineFoot'); if(LINE_URL){ [fab,foot].forEach(a=>{ a.href=LINE_URL; a.hidden=false; }); } }
+
+async function initStore(){
+  const n0=lsGet('hangul-nick'); if(n0){ nick=n0; loadLocal(n0); }
+  if(!checkHash()) refreshAll();
+  setupLine();
+  const C=window.claude; if(!C||typeof C.use!=='function') return;
+  try{ const u=await C.use('user'); if(u && await u.canEdit()){ isTeacher=true; teacherBtn.hidden=false; applyLocks(); } }catch(e){}
+}
+initStore();
+</script>
+
+</body>
+</html>
