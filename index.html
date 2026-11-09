@@ -268,6 +268,10 @@ section.locked .quiz-jump{display:none}
 .idline{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:4px}
 .idline .idv{font-size:20px}
 .smallnote{font-size:13px;color:var(--muted);margin-top:8px}
+.nc-text{font-weight:600;font-size:15px}
+.savest{font-size:15px;font-weight:600;margin:0}
+.savest.ok{color:var(--celadon)}
+.savest.warn{color:var(--amber)}
 a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
 /* teacher panel */
 .tpanel{padding-block:40px 0}
@@ -309,6 +313,10 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
           <label for="rid">復元ID</label>
           <div class="nick-row"><input id="rid" placeholder="例：ゆうき-K7Q2M" autocomplete="off" enterkeyhint="done"><button class="btn" id="ridGo" type="button">復元</button></div>
         </div>
+      </div>
+      <div id="nickConfirm" hidden>
+        <p id="nickConfirmText" class="nc-text"></p>
+        <div class="row"><button class="btn" id="ncYes" type="button">はい、続きから</button><button class="btn ghost" id="ncNo" type="button">いいえ、別の名前にする</button></div>
       </div>
       <div id="nickShow" hidden>
         <div class="hello"><span id="nickHello"></span><button class="btn ghost sm" id="nickChange" type="button">変更</button></div>
@@ -873,7 +881,28 @@ let nick='', teacherMode=lsGet('hangul-teacher')==='1', isTeacher=false;
 const ART_URL='https://renatusauctor.github.io/hangul-topik/';
 
 function loadLocal(n){ const p=parseJ(lsGet('hangul-progress:'+n),{}); prog={passed:p.passed||{},best:p.best||{}}; known=new Set(parseJ(lsGet('topik1-known:'+n),[])); }
-function persist(){ if(!nick) return; lsSet('hangul-progress:'+nick,JSON.stringify(prog)); lsSet('topik1-known:'+nick,JSON.stringify([...known])); updateNickUI(); }
+function persist(){ if(!nick) return; lsSet('hangul-progress:'+nick,JSON.stringify(prog)); lsSet('topik1-known:'+nick,JSON.stringify([...known])); updateNickUI(); schedulePush(); }
+
+/* server save/load (Google Apps Script). Works on the GitHub site; claude.ai blocks it, so the page falls back to restore IDs there. */
+const API_URL='https://script.google.com/macros/s/AKfycbwdfIFYJmP8s0oLIMpJgS_Yqj6xfXLIJvt0-M0QIqz02f62ryWROU9_xiLDXyRIOoqX1w/exec';
+let apiOn=false, pushT=null, savedOnce=false;
+async function apiGet(params){ const c=new AbortController(); const t=setTimeout(()=>c.abort(),10000); try{ const r=await fetch(API_URL+'?'+new URLSearchParams(params),{signal:c.signal}); return await r.json(); } finally{ clearTimeout(t); } }
+async function apiSave(extra){
+  const c=new AbortController(); const t=setTimeout(()=>c.abort(),15000);
+  try{ const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:'save',nick,best:prog.best,passed:prog.passed,known:[...known]},extra||{})),signal:c.signal}); return await r.json(); }
+  finally{ clearTimeout(t); }
+}
+function schedulePush(){ if(!apiOn||!nick) return; clearTimeout(pushT); pushT=setTimeout(()=>pushApi(),1200); }
+async function pushApi(extra){
+  if(!apiOn||!nick) return false; clearTimeout(pushT);
+  setSync('保存しています…');
+  try{ const r=await apiSave(extra); if(!r||!r.ok) throw new Error('save'); savedOnce=true; setSync(); return true; }
+  catch(e){ setSync('サーバーに保存できませんでした。インターネット接続を確認してください。記録はこの端末に残っています。','warn'); return false; }
+}
+function mergeData(d){ d=d||{};
+  Object.keys(d.passed||{}).forEach(k=>{ if(d.passed[k]) prog.passed[k]=true; });
+  Object.keys(d.best||{}).forEach(k=>{ prog.best[k]=Math.max(prog.best[k]||0,+d.best[k]||0); });
+  (Array.isArray(d.known)?d.known:[]).forEach(w=>known.add(String(w))); }
 
 /* restore code: 5 chars = step best scores + checksum tied to the nickname */
 const B32='0123456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -906,6 +935,12 @@ function formUrl(si,score){
 }
 function reportBlock(si,score,pass){
   const wrap=h('div','report');
+  if(apiOn){
+    if(pass){ const st=h('p','savest','記録を保存しています…'); wrap.append(st);
+      pushApi({step:si,score}).then(ok=>{ st.className='savest '+(ok?'ok':'warn'); st.textContent=ok?'✓ 記録を保存しました。別の端末でも同じニックネームで続きから始められます。':'記録を保存できませんでした。インターネット接続を確認してください（この端末には残っています）。'; }); }
+    else return h('span');
+    return wrap;
+  }
   wrap.append(h('div','qsub','あなたの復元ID（別の端末で続けるときに使います）'));
   const line=h('div','idline'); line.append(h('b','idv',myIdStr())); const cp=h('button','btn ghost sm','コピー'); cp.type='button'; cp.onclick=()=>copyText(myIdStr(),cp); line.append(cp); wrap.append(line);
   const row=h('div','row'); const fu=formUrl(si,score);
@@ -919,10 +954,14 @@ function reportBlock(si,score,pass){
 function setSync(msg,cls){
   const el=$('#syncState'); el.className='sync'+(cls?' '+cls:'');
   if(msg){ el.textContent=msg; return; }
+  if(apiOn){ if(nick && savedOnce){ el.className='sync ok'; el.textContent='✓ 記録はサーバーに保存されています。別の端末でも同じニックネームを入れると続きから始められます。'; }
+    else el.textContent=nick?'記録は自動で保存されます。別の端末でも同じニックネームを入れると続きから始められます。':'ニックネームを入れてください。別の端末でも同じニックネームで続きから始められます。';
+    return; }
   el.textContent=nick?'記録はこの端末に保存されています。別の端末で続けるときは、復元IDか「LINEで自分に送る」で保存したリンクを使ってください。':'ニックネームを入れると、学習の記録がその名前で保存されます。';
 }
 function updateNickUI(){
-  $('#nickForm').hidden=!!nick; $('#nickShow').hidden=!nick;
+  $('#nickForm').hidden=!!nick; $('#nickShow').hidden=!nick; $('#nickConfirm').hidden=true;
+  document.querySelector('.idrow').hidden=apiOn; $('#restoreOpen').hidden=apiOn; if(apiOn) $('#restoreBox').hidden=true;
   if(nick){ const n=Object.keys(prog.passed).filter(k=>prog.passed[k]).length; $('#nickHello').textContent=`${nick} さん　合格 ${n} / 5 ステップ`; $('#myId').textContent=myIdStr(); $('#idLine').href=lineSelfUrl(); }
 }
 function refreshAll(){ document.querySelectorAll('.quiz').forEach((q,si)=>q.replaceWith(makeQuiz(si))); applyLocks(); limit=120; render(); nextFlash(); updateNickUI(); setSync(); }
@@ -946,7 +985,26 @@ function checkHash(){
   restore(n,best); return true;
 }
 function askNick(){ const l=$('#learner'); l.scrollIntoView({behavior:'smooth',block:'center'}); $('#nickForm').hidden=false; $('#nickShow').hidden=true; setTimeout(()=>$('#nick').focus({preventScroll:true}),400); l.classList.add('attn'); setTimeout(()=>l.classList.remove('attn'),1600); }
-$('#nickSave').onclick=()=>{ if(!setNick($('#nick').value)) $('#nick').focus(); };
+$('#nickSave').onclick=async()=>{
+  const n=$('#nick').value.trim().slice(0,20); if(!n){ $('#nick').focus(); return; }
+  if(!apiOn){ setNick(n); return; }
+  const btn=$('#nickSave'); btn.disabled=true; setSync('確認しています…');
+  let r=null; try{ r=await apiGet({action:'load',nick:n}); }catch(e){}
+  btn.disabled=false;
+  if(r&&r.ok&&r.exists){
+    if(lsGet('hangul-progress:'+n)!=null){ setNick(n); mergeData(r.data); persist(); refreshAll(); return; } /* same person, same device */
+    showConfirm(r); return;
+  }
+  setNick(n);
+  if(!r) setSync('サーバーに接続できませんでした。記録はこの端末に保存されます。','warn'); else pushApi();
+};
+function showConfirm(r){
+  const d=r.data||{}; const n=Object.keys(d.passed||{}).filter(k=>d.passed[k]).length;
+  $('#nickConfirmText').textContent=`「${r.nick}」さんの記録があります（合格 ${n} / 5 ステップ）。あなたの記録ですか？`;
+  $('#nickForm').hidden=true; $('#nickConfirm').hidden=false; setSync('');
+  $('#ncYes').onclick=()=>{ setNick(r.nick); mergeData(d); persist(); refreshAll(); setSync('✓ 記録を読み込みました。続きから始めましょう。','ok'); };
+  $('#ncNo').onclick=()=>{ $('#nickConfirm').hidden=true; $('#nickForm').hidden=false; $('#nick').value=''; $('#nick').focus(); setSync('その名前はほかの人が使っています。別のニックネームを入れてください（例：ゆうき2）。','warn'); };
+}
 $('#nick').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); $('#nickSave').click(); } });
 $('#nickChange').onclick=()=>{ $('#nick').value=nick; $('#nickForm').hidden=false; $('#nickShow').hidden=true; $('#nick').focus(); };
 $('#restoreOpen').onclick=()=>{ const b=$('#restoreBox'); b.hidden=!b.hidden; if(!b.hidden) $('#rid').focus(); };
@@ -963,6 +1021,13 @@ async function initStore(){
   const n0=lsGet('hangul-nick'); if(n0){ nick=n0; loadLocal(n0); }
   if(!checkHash()) refreshAll();
   setupLine();
+  apiGet({action:'ping'}).then(async r=>{
+    if(!r||!r.ok) return;
+    apiOn=true; updateNickUI(); setSync();
+    if(!nick) return;
+    try{ const s=await apiGet({action:'load',nick}); if(s&&s.ok&&s.exists){ mergeData(s.data); lsSet('hangul-progress:'+nick,JSON.stringify(prog)); lsSet('topik1-known:'+nick,JSON.stringify([...known])); refreshAll(); } }catch(e){}
+    pushApi();
+  }).catch(()=>{});
   const C=window.claude; if(!C||typeof C.use!=='function') return;
   try{ const u=await C.use('user'); if(u && await u.canEdit()){ isTeacher=true; teacherBtn.hidden=false; applyLocks(); } }catch(e){}
 }
