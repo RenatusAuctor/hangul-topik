@@ -283,6 +283,16 @@ section.locked .quiz-jump{display:none}
 .quiz .qhint{font-size:15px;color:var(--muted);margin:-8px 0 14px}
 .quiz .ch.kos{font-family:var(--f-display);font-size:17px;font-weight:700;text-align:left}
 @media (max-width:720px){.gvoc{grid-template-columns:1fr 1fr}.gu summary{gap:8px;padding:10px 12px}.gbody{padding:4px 12px 14px}}
+.quiz .qinst{font-family:var(--f-display);font-size:15px;font-weight:700;margin-top:2px;word-break:keep-all}
+.quiz .qpass{font-family:var(--f-display);font-size:17px;line-height:1.8;white-space:pre-line;border:1px solid var(--line);border-radius:8px;background:var(--paper);padding:12px 14px;margin:10px 0 16px;word-break:keep-all}
+.quiz .qscript{display:block;white-space:pre-line;font-family:var(--f-display);font-size:16px;margin:8px 0 4px;padding-left:10px;border-left:3px solid var(--celadon)}
+.quiz.review{margin:0 0 22px}
+.rstats{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.rstats span{border:1px solid var(--line);border-radius:999px;padding:3px 12px;font-size:13px;color:var(--muted);white-space:nowrap}
+.rstats b{color:var(--celadon);font-variant-numeric:tabular-nums}
+.gu.gm{border-style:dashed}
+.gu.gm .gno{color:var(--amber)}
+.gw .hj{font-family:"Shippori Mincho",serif;font-style:normal;color:var(--amber);margin-left:6px}
 /* learner card */
 .learner{margin-top:20px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;max-width:30em;transition:box-shadow .3s}
 .learner.attn{box-shadow:0 0 0 4px var(--amber-soft);border-color:var(--amber)}
@@ -337,7 +347,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
   <div>
     <div class="eyebrow">日本語話者のための韓国語入門</div>
     <h1>ハングルからTOPIKまで<small class="ko">한글에서 토픽까지</small></h1>
-    <p class="lede">基本母音10個と子音14個から始めて、複合母音・パッチムでハングルを読めるようにしてから、TOPIK I の文法を20課で順番に学びます。単語は各課の例文の中で覚えます。文字・例文・単語をタップすると音声が流れます。</p>
+    <p class="lede">基本母音10個と子音14個から始めて、複合母音・パッチムでハングルを読めるようにしてから、TOPIK I の文法を20課で順番に学びます。単語は各課の例文と「今日の復習」で覚え、ミニ模試と過去問で仕上げます。文字・例文・単語をタップすると音声が流れます。</p>
     <div class="learner" id="learner">
       <div id="nickForm">
         <label for="nick">ニックネームを入力してください</label>
@@ -487,9 +497,10 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
     <div class="step-no">5</div>
     <div>
       <h2>TOPIK I 文法<span class="ko">문법</span></h2>
-      <p>ここからは文を作る練習です。韓国語は日本語と語順がほぼ同じなので、助詞と語尾を覚えれば文が作れます。各課の例文と単語をタップして音を聞き、確認クイズに合格すると次の課が開きます。単語は例文とクイズの中に少しずつ出てきます。</p>
+      <p>ここからは文を作る練習です。韓国語は日本語と語順がほぼ同じなので、助詞と語尾を覚えれば文が作れます。各課の例文と単語をタップして音を聞き、確認クイズに合格すると次の課が開きます。単語は例文とクイズの中に少しずつ出てきます。TOPIK I は聞き取りが半分なので、クイズには音声を聞いて答える問題も出ます。</p>
     </div>
   </div>
+  <div id="reviewSlot"></div>
   <div class="gprog"><span id="gprogText"></span><div class="bar"><i id="gprogBar"></i></div></div>
   <div id="gunits"></div>
 </section>
@@ -542,7 +553,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 
 <footer class="wrap">
   <p class="foot-line"><a id="lineFoot" target="_blank" rel="noopener" hidden>わからないことは LINE で質問してください →</a></p>
-  ローマ字は韓国の国立国語院「国語のローマ字表記法」に従っています。カナ表記はおおよその目安です。正確な音は音声で確認してください。単語リストはTOPIK Iレベルの基礎語彙をテーマ別にまとめた学習用リストで、公式の語彙リストそのものではありません。音声は端末にインストールされた韓国語音声で再生されます。
+  ローマ字は韓国の国立国語院「国語のローマ字表記法」に従っています。カナ表記はおおよその目安です。正確な音は音声で確認してください。単語リストはTOPIK Iレベルの基礎語彙をテーマ別にまとめた学習用リストで、公式の語彙リストそのものではありません。ミニ模試はTOPIK Iの出題形式にならったオリジナル問題で、過去問そのものではありません。音声は端末にインストールされた韓国語音声で再生されます。
 </footer>
 
 <script>
@@ -559,6 +570,7 @@ function speak(text, el){
     if(el){ el.classList.add('playing'); u.onend=u.onerror=()=>el.classList.remove('playing'); setTimeout(()=>el.classList.remove('playing'),2500); }
     synth.speak(u); }catch(e){}
 }
+function speakDlg(lines){ if(!synth) return; try{ synth.cancel(); lines.forEach(([who,t])=>{ const u=utter(t); u.pitch=who==='남'?0.7:1.3; synth.speak(u); }); }catch(e){} }
 function speakSeq(a,b,el){ if(!synth) return; try{ synth.cancel(); if(el){ el.classList.add('playing'); setTimeout(()=>el.classList.remove('playing'),2500);} synth.speak(utter(a)); synth.speak(utter(b)); }catch(e){} }
 const $=s=>document.querySelector(s);
 const h=(tag,cls,txt)=>{ const e=document.createElement(tag); if(cls) e.className=cls; if(txt!=null) e.textContent=txt; return e; };
@@ -968,6 +980,76 @@ voc:'드시다=召し上がる|계시다=いらっしゃる|주무시다=お休�
 q:[['할머니께서 ＿.','주무세요',['자요','주무요','주무시요'],'おばあさんがお休みになっています。'],['선생님, 점심 ＿?','드셨어요',['먹었어요','드렸어요','드시었요'],'先生、お昼は召し上がりましたか。'],['부모님은 부산에 ＿.','계세요',['있어요','계시요','있으세요'],'両親はプサンにいらっしゃいます。'],['＿이 어떻게 되세요?','성함',['연세','댁','선물'],'お名前は何とおっしゃいますか。'],['아버지＿ 선물을 드렸어요.','께',['께서','을','의'],'父にプレゼントを差し上げました。'],['할머니＿ 주무세요.','께서',['께','를','에'],'おばあさんがお休みになっています。'],['어디 ＿?（タメ口）','가',['가요','갑니다','가세요'],'どこ行くの？'],['밥 ＿?（タメ口）','먹었어',['먹었어요','드셨어요','먹었습니다'],'ご飯食べた？']]}
 ];
 /*GRAMMAR-DATA-END*/
+/*MOCK-DATA-START*/
+/* ミニ模試（TOPIK I の出題形式にならったオリジナル問題。過去問そのものではありません）
+   QT: 問題の種類 [韓国語の指示文, 日本語の指示文]
+   MOCKS[n].q: [種類, 本文（会話は [[話者,文],…]、読解は文字列）, 選択肢4つ, 正解の番号(0〜3), 日本語の解説] */
+const QT={
+  ans:['다음을 듣고 물음에 맞는 대답을 고르십시오.','聞いて、質問に合う答えを選んでください。'],
+  next:['다음을 듣고 이어지는 말을 고르십시오.','聞いて、次に続く言葉を選んでください。'],
+  place:['여기는 어디입니까?','ここはどこですか。'],
+  talk:['다음은 무엇에 대해 말하고 있습니까?','何について話していますか。'],
+  dsame:['다음을 듣고 대화 내용과 같은 것을 고르십시오.','聞いて、会話の内容と合うものを選んでください。'],
+  dmain:['다음을 듣고 여자의 중심 생각을 고르십시오.','聞いて、女性がいちばん言いたいことを選んでください。'],
+  topic:['무엇에 대한 내용입니까?','何についての内容ですか。'],
+  blank:['(　)에 들어갈 말로 가장 알맞은 것을 고르십시오.','（　）に入る言葉を選んでください。'],
+  not:['다음을 읽고 맞지 않는 것을 고르십시오.','読んで、内容と合わないものを選んでください。'],
+  same:['다음의 내용과 같은 것을 고르십시오.','内容と合うものを選んでください。'],
+  main:['다음을 읽고 중심 내용을 고르십시오.','読んで、中心となる内容を選んでください。'],
+  order:['다음을 순서에 맞게 배열한 것을 고르십시오.','正しい順番に並べたものを選んでください。'],
+  blank2:['㉠에 들어갈 말로 가장 알맞은 것을 고르십시오.','㉠に入る言葉を選んでください。']
+};
+const MOCKS=[
+{t:'1級ミニ模試　聞き取り',lv:1,pass:6,listen:true,q:[
+ ['ans',[['남','가방이 있어요?']],['네, 가방이에요.','네, 가방이 있어요.','아니요, 가방이 커요.','아니요, 가방을 사요.'],1,'「かばんがありますか」→「はい、かばんがあります」。있어요? には 있어요／없어요 で答えます。'],
+ ['ans',[['여','어제 뭐 했어요?']],['도서관에 가요.','영화를 봤어요.','세 시에 해요.','친구가 해요.'],1,'「昨日何をしましたか」。過去のことなので 봤어요（見ました）が合います。'],
+ ['ans',[['남','언제 한국에 왔어요?']],['비행기로 왔어요.','친구하고 왔어요.','작년에 왔어요.','서울에 왔어요.'],2,'언제（いつ）と聞いているので、時を答える 작년에（去年）が正解です。'],
+ ['next',[['여','처음 뵙겠습니다. 저는 김수미입니다.']],['안녕히 가세요.','잘 먹겠습니다.','괜찮습니다.','만나서 반갑습니다.'],3,'「はじめまして」には 만나서 반갑습니다（お会いできてうれしいです）と返します。'],
+ ['place',[['남','어서 오세요. 뭘 드릴까요?'],['여','비빔밥 하나하고 물 좀 주세요.']],['식당','서점','은행','약국'],0,'ビビンバと水を注文しているので 식당（食堂）です。'],
+ ['place',[['여','책을 어디에서 빌려요?'],['남','이 층에서 빌려요. 학생증이 있어요?']],['우체국','백화점','도서관','공항'],2,'本を借りる（빌려요）場所なので 도서관（図書館）です。'],
+ ['talk',[['남','이분은 누구예요?'],['여','제 어머니예요. 그리고 이 사람은 동생이에요.']],['직업','가족','나라','이름'],1,'母と弟（妹）の話なので 가족（家族）です。'],
+ ['talk',[['여','이 사과는 얼마예요?'],['남','한 개에 천 원이에요.']],['시간','날씨','맛','값'],3,'얼마예요?（いくらですか）は 값（値段）を聞く表現です。'],
+ ['dsame',[['남','수미 씨, 주말에 뭐 했어요?'],['여','토요일에 친구하고 영화를 봤어요. 민수 씨는요?'],['남','저는 집에서 쉬었어요.']],['남자는 주말에 영화를 봤습니다.','여자는 토요일에 친구를 만났습니다.','여자는 주말에 집에 있었습니다.','남자는 친구하고 쉬었습니다.'],1,'女性は土曜日に友だちと映画を見ました。男性は家で休みました。'],
+ ['dsame',[['여','민수 씨, 내일 몇 시에 만나요?'],['남','두 시에 학교 앞에서 만나요.'],['여','미안해요. 두 시에 수업이 있어요. 네 시는 어때요?'],['남','좋아요. 그럼 네 시에 봐요.']],['두 사람은 두 시에 만납니다.','여자는 내일 수업이 없습니다.','두 사람은 학교 앞에서 만납니다.','남자는 네 시에 수업이 있습니다.'],2,'時間は4時に変わりましたが、場所は学校の前のままです。授業があるのは女性です。']
+]},
+{t:'1級ミニ模試　読解',lv:1,pass:6,q:[
+ ['topic','저는 스무 살입니다. 동생은 열여덟 살입니다.',['나이','날짜','시간','주소'],0,'살 は年齢を数える言葉です。나이＝年齢。'],
+ ['topic','오늘은 월요일입니다. 내일은 화요일입니다.',['계절','요일','날씨','나라'],1,'月曜日・火曜日の話なので 요일（曜日）です。'],
+ ['blank','도서관에 갑니다. 책(　) 읽습니다.',['이','을','에','의'],1,'「本を読みます」。책 はパッチムがあるので 을 を使います。'],
+ ['blank','배가 고픕니다. 그래서 (　)에 갑니다.',['은행','병원','우체국','식당'],3,'「おなかがすきました。だから食堂に行きます」。'],
+ ['blank','어제 친구를 (　). 같이 커피를 마셨습니다.',['만나세요','만납니다','만났습니다','안 만났습니다'],2,'어제（昨日）のことで、あとの文も過去形なので 만났습니다 です。'],
+ ['not','한국어 교실\n요일: 월요일, 수요일\n시간: 오후 7시 ~ 8시\n장소: 서울도서관 2층\n수업료: 없음',['월요일에 수업이 있습니다.','수업은 오전에 합니다.','도서관에서 공부합니다.','수업은 한 시간입니다.'],1,'時間は 오후（午後）7時〜8時です。오전（午前）ではありません。'],
+ ['same','저는 일본 사람입니다. 지금 서울에 삽니다. 한국 회사에서 일합니다. 주말에는 한국어를 공부합니다.',['저는 일본에 삽니다.','저는 학교에 다닙니다.','저는 회사원입니다.','저는 주말에 일합니다.'],2,'「韓国の会社で働いています」＝会社員です。住んでいるのはソウルです。'],
+ ['same','어제는 제 생일이었습니다. 친구들이 우리 집에 왔습니다. 친구들하고 케이크를 먹었습니다. 선물도 많이 받았습니다.',['저는 케이크를 만들었습니다.','오늘은 제 생일입니다.','저는 친구 집에 갔습니다.','저는 선물을 받았습니다.'],3,'「プレゼントもたくさんもらいました」。誕生日は昨日で、友だちが家に来ました。'],
+ ['order','(가) 그래서 약국에 갔습니다.\n(나) 어제부터 머리가 아팠습니다.\n(다) 지금은 안 아픕니다.\n(라) 약을 샀습니다. 그리고 그 약을 먹었습니다.',['(가)-(나)-(라)-(다)','(나)-(라)-(가)-(다)','(나)-(가)-(라)-(다)','(가)-(라)-(다)-(나)'],2,'頭が痛かった → だから薬局に行った → 薬を買って飲んだ → 今は痛くない。그래서 で始まる文は最初に来ません。'],
+ ['blank2','저는 매일 아침 일곱 시에 일어납니다. 아침을 먹고 회사에 갑니다. 회사는 집에서 가깝습니다. 그래서 ( ㉠ ) 갑니다. 저녁에는 집에서 텔레비전을 봅니다.',['걸어서','비행기로','친구하고','주말에'],0,'会社が家から近いので、걸어서（歩いて）行きます。']
+]},
+{t:'2級ミニ模試　聞き取り',lv:2,pass:7,listen:true,q:[
+ ['ans',[['남','이 옷을 입어 봐도 돼요?']],['네, 저쪽에서 입어 보세요.','네, 옷을 사러 왔어요.','아니요, 옷이 비싸요.','아니요, 입어 봤어요.'],0,'「着てみてもいいですか」→「はい、あちらで着てみてください」。'],
+ ['ans',[['여','왜 어제 모임에 안 왔어요?']],['모임이 재미있었어요.','내일 갈 거예요.','감기에 걸려서 못 갔어요.','친구하고 같이 왔어요.'],2,'왜（なぜ）と聞いているので、理由の -아서/어서 を使った答えが合います。'],
+ ['next',[['남','늦어서 죄송합니다.']],['잘 지냈어요.','아니에요, 괜찮아요.','축하합니다.','고맙습니다.'],1,'謝られたら 아니에요, 괜찮아요（いいえ、大丈夫です）と返します。'],
+ ['place',[['여','어디가 아프세요?'],['남','어제부터 열이 나고 목이 아파요.']],['공항','미용실','우체국','병원'],3,'「どこが痛いですか」「熱が出てのどが痛いです」→ 병원（病院）。'],
+ ['place',[['남','이 편지를 일본에 보내고 싶어요.'],['여','네, 여기에 주소를 써 주세요.']],['은행','우체국','서점','호텔'],1,'手紙を送る（보내다）場所なので 우체국（郵便局）です。'],
+ ['talk',[['여','저는 시간이 있을 때 사진을 찍어요. 민수 씨는요?'],['남','저는 주말마다 등산을 해요.']],['계획','고향','취미','날씨'],2,'時間があるときにすること＝취미（趣味）の話です。'],
+ ['talk',[['남','이번 방학에 뭐 할 거예요?'],['여','제주도에 가서 바다를 볼 거예요.']],['운동','계획','음식','직업'],1,'-(으)ㄹ 거예요 でこれからの予定を話しています。계획＝計画。'],
+ ['dsame',[['여','민수 씨, 이 근처에 맛있는 식당이 있어요?'],['남','네, 회사 옆에 있는 한국 식당이 맛있어요. 저는 거기에서 자주 점심을 먹어요.'],['여','그래요? 그럼 오늘 점심에 같이 갈까요?'],['남','좋아요. 열두 시에 일 층에서 만나요.']],['남자는 그 식당에 안 가 봤습니다.','여자는 그 식당에서 자주 먹습니다.','두 사람은 오늘 같이 점심을 먹을 겁니다.','식당은 회사에서 멉니다.'],2,'女性が「今日のお昼に一緒に行きましょうか」と誘い、男性が「いいですよ」と答えました。よく食べに行くのは男性です。'],
+ ['dmain',[['남','수미 씨는 매일 아침에 운동을 해요?'],['여','네, 아침에 운동하면 하루 종일 기분이 좋아요. 그래서 피곤해도 꼭 해요.'],['남','저는 아침에 일어나기가 힘들어요.']],['아침에는 피곤해서 쉬어야 합니다.','아침에 운동하면 기분이 좋습니다.','운동은 저녁에 하는 것이 좋습니다.','아침에 일찍 일어나기가 어렵습니다.'],1,'女性は「朝運動すると一日中気分がいい」と言っています。起きるのが大変なのは男性です。'],
+ ['dsame',[['여','여보세요? 민수 씨, 저 지금 지하철역에 도착했어요.'],['남','아, 미안해요. 길이 막혀서 십 분쯤 늦을 거예요.'],['여','괜찮아요. 그럼 역 앞에 있는 커피숍에서 기다릴게요.'],['남','고마워요. 빨리 갈게요.']],['남자는 지하철을 타고 있습니다.','여자는 약속 시간에 늦었습니다.','남자는 커피숍에서 기다리고 있습니다.','여자는 커피숍에서 남자를 기다릴 겁니다.'],3,'遅れるのは男性です。女性は「駅前のコーヒーショップで待ちます」と言いました。']
+]},
+{t:'2級ミニ模試　読解',lv:2,pass:7,q:[
+ ['topic','저는 불고기를 좋아합니다. 김치찌개도 자주 먹습니다.',['운동','쇼핑','음식','여행'],2,'プルコギとキムチチゲの話なので 음식（食べ物）です。'],
+ ['topic','봄에는 꽃이 핍니다. 겨울에는 눈이 옵니다.',['계절','시간','휴일','장소'],0,'春と冬の話なので 계절（季節）です。'],
+ ['blank','방이 너무 덥습니다. 그래서 창문을 (　).',['닫았습니다','열었습니다','닦았습니다','만들었습니다'],1,'部屋が暑いので、窓を 열었습니다（開けました）。닫다＝閉める、닦다＝拭く。'],
+ ['blank','내일 시험이 있습니다. 그래서 오늘 (　) 공부해야 합니다.',['아까','별로','열심히','가끔'],2,'열심히＝一生懸命。아까＝さっき、별로＝あまり、가끔＝ときどき。'],
+ ['blank','비가 (　) 우산을 가지고 가세요.',['와서','오니까','오지만','오고'],1,'あとに -(으)세요（命令・依頼）が来るときの理由は -(으)니까 を使います。-아서/어서 は使えません。'],
+ ['not','◆ 김치 만들기 교실 ◆\n날짜: 10월 5일(토) 오전 10시 ~ 12시\n장소: 한국문화센터 3층\n참가비: 10,000원\n※ 금요일까지 전화로 신청하세요.',['토요일에 김치를 만듭니다.','두 시간 동안 합니다.','무료로 배울 수 있습니다.','전화로 신청해야 합니다.'],2,'참가비（参加費）は10,000ウォンです。무료（無料）ではありません。'],
+ ['same','저는 지난달에 새 집으로 이사했습니다. 옛날 집은 회사에서 멀어서 아침마다 힘들었습니다. 지금 집은 회사까지 걸어서 십 분쯤 걸립니다. 방은 조금 작지만 아주 마음에 듭니다.',['새 집은 방이 큽니다.','저는 지금 집을 좋아합니다.','새 집은 회사에서 멉니다.','저는 다음 달에 이사할 겁니다.'],1,'마음에 듭니다＝気に入っています。部屋は少し小さく、会社まで歩いて10分です。'],
+ ['main','저는 요즘 자전거로 회사에 갑니다. 버스보다 시간이 조금 더 걸리지만 운동이 돼서 좋습니다. 그리고 교통비도 들지 않습니다. 앞으로도 계속 자전거를 탈 겁니다.',['자전거는 버스보다 빠릅니다.','교통비가 비싸서 걱정입니다.','운동을 할 시간이 없습니다.','자전거로 회사에 가는 것이 좋습니다.'],3,'時間は少しかかるが、運動になり交通費もかからないので良い、という内容です。'],
+ ['order','(가) 그런데 어제 그 우산을 지하철에 놓고 내렸습니다.\n(나) 저는 지난주에 예쁜 우산을 샀습니다.\n(다) 다행히 우산을 찾을 수 있었습니다.\n(라) 그래서 지하철역 사무실에 전화를 했습니다.',['(나)-(가)-(라)-(다)','(나)-(라)-(가)-(다)','(가)-(나)-(다)-(라)','(가)-(라)-(나)-(다)'],0,'傘を買った → でも地下鉄に置き忘れた → だから駅の事務室に電話した → 幸い見つかった。그런데・그래서 で始まる文は最初に来ません。'],
+ ['blank2','우리 동네에는 오래된 시장이 있습니다. 이 시장은 물건값이 싸고 음식이 맛있어서 사람들이 많이 옵니다. 저는 주말마다 이 시장에 가서 과일을 삽니다. 시장 아주머니가 친절해서 과일을 ( ㉠ ) 주실 때도 있습니다. 그래서 저는 마트보다 시장에 가는 것을 더 좋아합니다.',['비싸게 팔아','하나 더','천천히 먹어','다시 만들어'],1,'おばさんが親切なので、果物を 하나 더（もう一つ）くれることもあります。']
+]}
+];
+/*MOCK-DATA-END*/
 
 /* ---------- quizzes & step unlocking ---------- */
 const QN=10, PASS=8;
@@ -1045,56 +1127,134 @@ const GENS=[gen1,gen2,gen3,gen4,gen5];
 const G0=5, NG=GRAMMAR.length;
 GRAMMAR.forEach(u=>{ u.words=u.voc.split('|').map(p=>{ const i=p.indexOf('='); return {k:p.slice(0,i),m:p.slice(i+1)}; }); });
 function genG(k){
-  const u=GRAMMAR[k]; const t=pick(['fill','fill','fill','fill','fill','fill','voc','voc','voc','tr','tr']);
+  const u=GRAMMAR[k]; let t=pick(['fill','fill','fill','fill','fill','voc','voc','tr','ls','ls','ls']);
+  if(t==='ls'&&!canSpeak()) t=pick(['fill','tr']);
   if(t==='fill'){ const [s,a,ds,jp]=pick(u.q); const full=s.replace('＿',a); const conj=s.includes('→');
     return {prompt:s,hint:jp,answer:a,choices:shuffle([a,...ds]),sub:conj?'正しい形を選んでください':'＿ に入る言葉を選んでください',ps:true,ck:true,after:conj?a:full.replace(/（.*?）/g,''),explain:conj?`${full.replace(/（.*?）/g,'')}（${jp}）`:full}; }
   if(t==='voc'){ const prev=k>0&&Math.random()<.3; const src=prev?GRAMMAR[rnd(k)].words:u.words; const w=pick(src); const tag=prev?'（前の課の復習）':'';
-    return Math.random()<.5 ? mc(w.k,w.m,src.map(x=>x.m),{sub:'この単語の意味は？'+tag,pk:true,after:w.k,explain:`${w.k} = ${w.m}`})
-                            : mc(w.m,w.k,src.map(x=>x.k),{sub:'韓国語でどう言う？'+tag,ck:true,after:w.k,explain:`${w.m} = ${w.k}`}); }
+    const q=Math.random()<.5 ? mc(w.k,w.m,src.map(x=>x.m),{sub:'この単語の意味は？'+tag,pk:true,after:w.k,explain:`${w.k} = ${w.m}`})
+                             : mc(w.m,w.k,src.map(x=>x.k),{sub:'韓国語でどう言う？'+tag,ck:true,after:w.k,explain:`${w.m} = ${w.k}`});
+    q.wk=w.k; return q; }
+  if(t==='ls'){ /* listening: half of the real exam */
+    if(Math.random()<.65){ const e=pick(u.ex); return mc('',e[1],u.ex.map(x=>x[1]),{sub:'音声を聞いて、意味を選んでください',say:e[0],script:e[0]}); }
+    const w=pick(u.words); const q=mc('',w.m,u.words.map(x=>x.m),{sub:'音声を聞いて、単語の意味を選んでください',say:w.k,script:w.k}); q.wk=w.k; return q; }
   const e=pick(u.ex);
   return Math.random()<.5 ? mc(e[0],e[1],u.ex.map(x=>x[1]),{sub:'この文の意味は？',ps:true,after:e[0]})
                           : mc(e[1],e[0],u.ex.map(x=>x[0]),{sub:'この意味になる韓国語の文はどれ？',ck:true,cs:true,after:e[0]});
 }
+
+/* ---------- mini mock tests ----------
+   Scores live in prog.best[M0+n] only ("passed" is derived), so the teacher sheet's lesson count stays a lesson count. */
+const M0=60;
+const isMock=si=>si>=M0&&si<M0+MOCKS.length;
+const WHO={'남':'男性','여':'女性'};
+function buildMock(m){
+  return m.q.map(([ty,body,c,a,x])=>{ const dlg=Array.isArray(body);
+    return {sub:QT[ty][1],inst:QT[ty][0],say:dlg?body:null,script:dlg?body.map(([w,t])=>WHO[w]+'：'+t).join('\n'):null,pass:dlg?null:body,answer:c[a],choices:c,ck:true,cs:true,explain:x}; });
+}
+function passedSi(si){ return isMock(si)?(prog.best[si]||0)>=MOCKS[si-M0].pass:!!prog.passed[si]; }
+
+/* ---------- spaced review ----------
+   rev.w[word]=[box,dueDay]. A right answer moves the word up a box and pushes it further into the future;
+   a wrong answer (here or in a lesson quiz) brings it back today. Box 4+ counts as "覚えた". Kept on this device. */
+let rev={w:{},day:0,streak:0};
+const GAP=[0,1,2,4,8,16];
+const today=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*60000)/864e5);
+const HJ={}; WORDS.forEach(w=>{ if(w.hj&&!HJ[w.k]) HJ[w.k]=w.hj; });
+const LEX=new Map(), ORDER=[];
+GRAMMAR.forEach((u,k)=>u.words.forEach(w=>{ if(LEX.has(w.k)) return; LEX.set(w.k,{k:w.k,m:w.m,hj:HJ[w.k]||'',u:k,grp:u.words}); ORDER.push(w.k); }));
+{ const by={}; const book=WORDS.filter(w=>w.t!=='助詞'&&w.t!=='あいさつ・表現'); book.forEach(w=>(by[w.t]=by[w.t]||[]).push(w));
+  [...book.filter(w=>w.hj),...book.filter(w=>!w.hj)].forEach(w=>{ if(LEX.has(w.k)) return; LEX.set(w.k,{k:w.k,m:w.m,hj:w.hj,u:null,grp:by[w.t]}); ORDER.push(w.k); }); }
+function dueList(){ const t=today(); return Object.keys(rev.w).filter(k=>LEX.has(k)&&rev.w[k][0]<5&&rev.w[k][1]<=t).sort((a,b)=>rev.w[a][1]-rev.w[b][1]); }
+function nextNew(n){ const out=[]; for(const k of ORDER){ if(out.length>=n) break; if(rev.w[k]||known.has(k)) continue; const e=LEX.get(k); if(e.u!=null&&!isOpen(G0+e.u)) continue; out.push(k); } return out; }
+function srs(k,ok,full){
+  if(!LEX.has(k)) return; const t=today(), cur=rev.w[k];
+  if(!ok){ rev.w[k]=[0,t]; return; }
+  if(!full) return;
+  const b=Math.min(5,(cur?cur[0]:0)+1); rev.w[k]=[b,t+GAP[b]]; if(b>=4) known.add(k);
+}
+function revStats(){ const ks=Object.keys(rev.w); const t=today(); return {due:dueList().length,learning:ks.filter(k=>rev.w[k][0]<4).length,solid:ks.filter(k=>rev.w[k][0]>=4).length,streak:rev.day>=t-1?rev.streak:0}; }
+function wordQ(k,isNew,extra){
+  const e=LEX.get(k); const grp=e.grp.filter(x=>x.k!==e.k&&x.m!==e.m); const tag=isNew?'（新しい単語）':'';
+  const ex=`${e.k} = ${e.m}${e.hj&&e.hj!==e.m?'（'+e.hj+'）':''}`;
+  const types=['k2m','k2m','m2k','m2k']; if(canSpeak()) types.push('ls','ls'); if(e.hj&&e.hj!==e.m) types.push('hj');
+  const t=pick(types); let q;
+  if(t==='ls') q=mc('',e.m,grp.map(x=>x.m),{sub:'音声を聞いて、意味を選んでください'+tag,say:e.k,script:e.k,explain:ex});
+  else if(t==='k2m') q=mc(e.k,e.m,grp.map(x=>x.m),{sub:'この単語の意味は？'+tag,pk:true,after:e.k,explain:ex});
+  else if(t==='hj') q=mc(e.hj,e.k,grp.filter(x=>HJ[x.k]||x.hj).length>=3?grp.filter(x=>HJ[x.k]||x.hj).map(x=>x.k):grp.map(x=>x.k),{sub:'この漢字語は韓国語で？'+tag,ck:true,after:e.k,explain:ex});
+  else q=mc(e.m,e.k,grp.map(x=>x.k),{sub:'韓国語でどう言う？'+tag,ck:true,after:e.k,explain:ex});
+  q.wk=k; q.full=!extra; return q;
+}
+function buildReview(){
+  const due=dueList().slice(0,QN); const fresh=nextNew(QN-due.length); const out=due.map(k=>wordQ(k)).concat(fresh.map(k=>wordQ(k,true)));
+  if(out.length<QN){ const used=new Set([...due,...fresh]); shuffle(Object.keys(rev.w).filter(k=>LEX.has(k)&&!used.has(k))).slice(0,QN-out.length).forEach(k=>out.push(wordQ(k,false,true))); }
+  return shuffle(out.filter(q=>q.choices.length>=2));
+}
+
 function info(si){
+  if(si===-1) return {title:'今日の復習',id:'review',next:null};
+  if(isMock(si)) return {title:MOCKS[si-M0].t,id:'mk'+si,next:MOCKS[si-M0].listen?si+1:null};
   if(si<4) return {title:`ステップ${si+1} ${STEP_NAMES[si]}`,id:STEPS[si],next:si<3?si+1:G0};
   if(si===4) return {title:'単語帳 力だめし',id:'topik',next:null};
   const k=si-G0; return {title:`第${k+1}課 ${GRAMMAR[k].t}`,id:'g'+(k+1),next:k+1<NG?si+1:null};
 }
-function isOpen(i){ if(i===0||teacherMode) return true; if(i===4||i===G0) return !!prog.passed[3]; return !!prog.passed[i-1]; }
+function isOpen(i){
+  if(i===0||teacherMode) return true;
+  if(isMock(i)) return !!prog.passed[G0+(MOCKS[i-M0].lv===1?9:NG-1)];
+  if(i===-1||i===4||i===G0) return !!prog.passed[3];
+  return !!prog.passed[i-1];
+}
 function gPassed(){ let n=0; for(let k=0;k<NG;k++) if(prog.passed[G0+k]) n++; return n; }
 const LOCK_SVG='<svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path fill="currentColor" d="M4 7V5a4 4 0 0 1 8 0v2h1v8H3V7h1zm2 0h4V5a2 2 0 0 0-4 0v2z"/></svg>';
 function goTo(id){ const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
-function goStep(si){ if(si>=G0) openUnit(si-G0); else goTo(info(si).id); }
+function goStep(si){ if(isMock(si)) goTo('quiz-'+info(si).id); else if(si>=G0) openUnit(si-G0); else goTo(info(si).id); }
 
 function makeQuiz(si){
-  const inf=info(si); const gen=si>=G0?()=>genG(si-G0):GENS[si];
+  const inf=info(si); const mock=isMock(si)?MOCKS[si-M0]:null; const review=si===-1;
+  const gen=mock||review?null:si>=G0?()=>genG(si-G0):GENS[si];
+  const PASSN=mock?mock.pass:PASS;
   const nextT=inf.next!=null?info(inf.next).title:null;
-  const qtitle=inf.title+(si===4?' クイズ':'　確認クイズ');
-  const box=h('div','quiz'); box.id='quiz-'+inf.id; box.dataset.si=si;
+  const qtitle=mock||review?inf.title:inf.title+(si===4?' クイズ':'　確認クイズ');
+  const box=h('div','quiz'+(review?' review':'')); box.id='quiz-'+inf.id; box.dataset.si=si;
   let qs=[],i=0,score=0,wrong=[];
+  const play=q=>Array.isArray(q.say)?speakDlg(q.say):speak(q.say);
+  const label=q=>q.prompt||(q.pass?q.pass.replace(/\n/g,' ').slice(0,36)+'…':'音声：'+(q.script||q.say).replace(/\n/g,' '));
   function head(title){ const hd=h('div','qh'); hd.append(h('div','qt',title)); return hd; }
   function intro(){
     box.textContent='';
     box.append(head(qtitle));
-    box.append(h('p','qdesc',nextT?`${QN}問中${PASS}問以上正解で合格です。合格すると「${nextT}」が開きます。`:si===4?'単語帳の中からランダムに10問出ます。何度でも挑戦できます。':`${QN}問中${PASS}問以上正解で合格です。これが最後の課です。`));
+    if(review){
+      const s=revStats();
+      box.append(h('p','qdesc','習った単語を、忘れかけたころにもう一度出します。1セット10問。間違えた単語はすぐにまた出て、正解が続くと 1日後 → 2日後 → 4日後 → 8日後 と間隔が広がります。'));
+      const rs=h('div','rstats'); [['今日の復習',s.due+' 語'],['学習中',s.learning+' 語'],['定着',s.solid+' 語'],['連続',s.streak+' 日']].forEach(([a,b])=>{ const sp=h('span',null,a+' '); sp.append(h('b',null,b)); rs.append(sp); }); box.append(rs);
+      const b=h('button','btn',s.due?'復習を始める':'新しい単語を覚える'); b.type='button'; b.onclick=start; const row=h('div','row'); row.append(b); box.append(row); return;
+    }
+    box.append(h('p','qdesc',mock?`${QN}問中${PASSN}問以上が合格ラインです。`+(mock.listen?'音声は何度でも聞けます（本番は1〜2回しか流れません）。':'本番では1問に1分半ほどしか使えません。時間も意識してみましょう。')
+      :nextT?`${QN}問中${PASS}問以上正解で合格です。合格すると「${nextT}」が開きます。`:si===4?'単語帳の中からランダムに10問出ます。何度でも挑戦できます。':`${QN}問中${PASS}問以上正解で合格です。これが最後の課です。`));
+    if(mock&&mock.listen&&!canSpeak()) box.append(h('p','qdesc','※ この端末では韓国語の音声を再生できないため、会話文を文字で表示します。'));
     const st=h('p','qbest'); const best=prog.best[si];
-    if(prog.passed[si]){ st.append(h('span','badge ok','合格済み')); }
+    if(passedSi(si)){ st.append(h('span','badge ok',mock?'合格ライン達成':'合格済み')); }
     st.append(document.createTextNode(best!=null?`ベストスコア ${best} / ${QN}`:'まだ挑戦していません'));
     box.append(st);
-    const b=h('button','btn','クイズを始める'); b.type='button'; b.onclick=start; const row=h('div','row'); row.append(b); box.append(row);
+    const b=h('button','btn',mock?'模試を始める':'クイズを始める'); b.type='button'; b.onclick=start; const row=h('div','row'); row.append(b); box.append(row);
   }
   function start(){
     if(!nick){ askNick(); return; }
-    qs=[]; const keys=new Set(); let g=0;
-    while(qs.length<QN && g++<600){ const q=gen(); const key=q.prompt+'|'+q.answer+'|'+(q.say||''); if(keys.has(key)||q.choices.length<2) continue; keys.add(key); qs.push(q); }
+    if(mock) qs=buildMock(mock);
+    else if(review) qs=buildReview();
+    else { qs=[]; const keys=new Set(); let g=0;
+      while(qs.length<QN && g++<600){ const q=gen(); const key=q.prompt+'|'+q.answer+'|'+(q.say||''); if(keys.has(key)||q.choices.length<2) continue; keys.add(key); qs.push(q); } }
+    if(!qs.length){ box.textContent=''; box.append(head(qtitle),h('p','qdesc','いま出せる単語がありません。文法の課を進めると単語が増えます。')); return; }
     i=0; score=0; wrong=[]; show(); box.scrollIntoView({behavior:'smooth',block:'start'});
   }
   function show(){
     const q=qs[i]; box.textContent='';
     const hd=head(qtitle); hd.append(h('div','qmeta',`${i+1} / ${qs.length}　正解 ${score}`)); box.append(hd);
     const bar=h('div','bar'); const fill=h('i'); fill.style.width=(i/qs.length*100)+'%'; bar.append(fill); box.append(bar);
+    if(q.inst){ const ins=h('div','qinst',q.inst); ins.lang='ko'; box.append(ins); }
     box.append(h('div','qsub',q.sub));
-    if(q.say){ const lb=h('button','btn ghost listen','▶ 音声を聞く'); lb.type='button'; lb.onclick=()=>speak(q.say); box.append(lb); setTimeout(()=>speak(q.say),250); }
+    if(q.say&&canSpeak()){ const lb=h('button','btn ghost listen','▶ 音声を聞く'); lb.type='button'; lb.onclick=()=>play(q); box.append(lb); setTimeout(()=>play(q),250); }
+    else if(q.say||q.pass){ const p=h('div','qpass',q.pass||q.script||q.say); p.lang='ko'; box.append(p); }
     else { const p=h('div','qp'+(q.pk?' ko':q.ps?' kos':''),q.prompt); if(q.pk||q.ps) p.lang='ko'; box.append(p); }
     if(q.hint) box.append(h('div','qhint',q.hint));
     const long=q.choices.some(c=>c.length>9);
@@ -1102,10 +1262,14 @@ function makeQuiz(si){
     const fb=h('div','fb'); const next=h('button','btn next',i<qs.length-1?'次の問題':'結果を見る'); next.type='button'; next.hidden=true;
     q.choices.forEach(c=>{ const b=h('button','ch'+(q.ck?(q.cs?' kos':' ko'):''),c); b.type='button'; if(q.ck) b.lang='ko';
       b.onclick=()=>{
+        const ok=c===q.answer;
         grid.querySelectorAll('button').forEach(x=>{ x.disabled=true; if(x.textContent===q.answer) x.classList.add('ok'); });
-        if(c===q.answer){ score++; fb.innerHTML=''; fb.append(h('b','ok','正解！ ')); }
-        else { b.classList.add('ng'); wrong.push(q); fb.innerHTML=''; fb.append(h('b','ng','不正解　')); fb.append(document.createTextNode('正解は '+q.answer+'　')); }
+        fb.innerHTML='';
+        if(ok){ score++; fb.append(h('b','ok','正解！ ')); }
+        else { b.classList.add('ng'); wrong.push(q); fb.append(h('b','ng','不正解　')); fb.append(document.createTextNode('正解は '+q.answer+'　')); }
+        if(q.script&&canSpeak()){ const sc=h('span','qscript',q.script); sc.lang='ko'; fb.append(sc); }
         if(q.explain) fb.append(h('span','ex',q.explain));
+        if(q.wk){ srs(q.wk,ok,review&&q.full); if(review||!ok) persist(); }
         if(q.after) speak(q.after);
         box.querySelector('.qmeta').textContent=`${i+1} / ${qs.length}　正解 ${score}`;
         next.hidden=false; next.focus({preventScroll:true});
@@ -1113,20 +1277,36 @@ function makeQuiz(si){
     next.onclick=()=>{ i++; if(i<qs.length) show(); else finish(); };
     box.append(grid,fb); const row=h('div','row'); row.append(next); box.append(row);
   }
+  function wrongList(){
+    if(!wrong.length) return; box.append(h('div','qsub','間違えた問題')); const ul=h('ul','wrong');
+    wrong.forEach(q=>{ const li=h('li'); li.append(h('span','wq',label(q))); li.append(document.createTextNode(' → ')); const a=h('b',null,q.answer); if(q.ck) a.lang='ko'; li.append(a); if(q.explain) li.append(h('span','ex',q.explain)); ul.append(li); }); box.append(ul);
+  }
   function finish(){
-    const pass=score>=PASS; const wasPassed=!!prog.passed[si];
-    prog.best[si]=Math.max(prog.best[si]||0,score); if(pass) prog.passed[si]=true; saveProg(); applyLocks();
+    if(review){
+      const t=today(); if(rev.day!==t){ rev.streak=rev.day===t-1?rev.streak+1:1; rev.day=t; } persist();
+      box.textContent=''; box.append(head('今日の復習　結果'));
+      const sc=h('div','result pass'); sc.append(h('div','score',`${score} / ${qs.length}`));
+      const s=revStats();
+      sc.append(h('p','rmsg',(wrong.length?'間違えた単語は、次のセットでもう一度出ます。':'全問正解です！')+`　連続 ${s.streak} 日目・定着 ${s.solid} 語`)); box.append(sc);
+      wrongList();
+      const row=h('div','row'); const again=h('button','btn',s.due?`もう1セット（復習 ${s.due} 語）`:'もう1セット（新しい単語）'); again.type='button'; again.onclick=start; row.append(again);
+      const end=h('button','btn ghost','今日はここまで'); end.type='button'; end.onclick=intro; row.append(end); box.append(row); return;
+    }
+    const pass=score>=PASSN; const wasPassed=passedSi(si);
+    prog.best[si]=Math.max(prog.best[si]||0,score); if(pass&&!mock) prog.passed[si]=true; saveProg(); applyLocks();
     box.textContent=''; box.append(head(inf.title+'　結果'));
     const sc=h('div','result'+(pass?' pass':' fail')); sc.append(h('div','score',`${score} / ${qs.length}`));
     let msg;
-    if(pass) msg = nextT ? (wasPassed?'合格です！':`合格です！「${nextT}」が開きました。`) : (si===4?'合格です！よくできました。':'おめでとうございます！TOPIK I 文法をすべて修了しました。');
+    if(mock) msg=pass?(mock.lv===1?'合格ラインを超えました。1級に必要な力がついています。':'合格ラインを超えました。2級まであと少しです。過去問で仕上げましょう。'):`合格ラインまであと${PASSN-score}問です。間違えた問題の解説を読んで、もう一度挑戦しましょう。`;
+    else if(pass){ msg = nextT ? (wasPassed?'合格です！':`合格です！「${nextT}」が開きました。`) : (si===4?'合格です！よくできました。':'おめでとうございます！TOPIK I 文法をすべて修了しました。');
+      if(!wasPassed&&si===G0+9) msg+='「1級 ミニ模試」も開きました。'; if(!wasPassed&&si===G0+NG-1) msg+='「2級 ミニ模試」が開きました。'; }
     else msg=`合格まであと${PASS-score}問です。説明と例を見直してから、もう一度挑戦しましょう。`;
     sc.append(h('p','rmsg',msg)); box.append(sc);
-    if(wrong.length){ box.append(h('div','qsub','間違えた問題')); const ul=h('ul','wrong'); wrong.forEach(q=>{ const li=h('li'); li.append(h('span','wq',q.prompt||('音声：'+q.say))); li.append(document.createTextNode(' → ')); const a=h('b',null,q.answer); if(q.ck) a.lang='ko'; li.append(a); if(q.explain) li.append(h('span','ex',q.explain)); ul.append(li); }); box.append(ul); }
+    wrongList();
     box.append(reportBlock(si,score,pass));
     const row=h('div','row');
-    if(pass && inf.next!=null){ const nb=h('button','btn','次へ進む'); nb.type='button'; nb.onclick=()=>goStep(inf.next); row.append(nb); }
-    if(!pass){ const rv=h('button','btn','説明を見直す'); rv.type='button'; rv.onclick=()=>goTo(inf.id); row.append(rv); }
+    if(pass && inf.next!=null){ const nb=h('button','btn',mock?'読解へ進む':'次へ進む'); nb.type='button'; nb.onclick=()=>goStep(inf.next); row.append(nb); }
+    if(!pass&&!mock){ const rv=h('button','btn','説明を見直す'); rv.type='button'; rv.onclick=()=>goTo(inf.id); row.append(rv); }
     const again=h('button','btn ghost','もう一度挑戦'); again.type='button'; again.onclick=start; row.append(again);
     box.append(row);
   }
@@ -1144,7 +1324,7 @@ function renderUnit(k){
   b.append(h('h4',null,'例文（タップで音声）'));
   const exs=h('div','gex'); u.ex.forEach(([ko,jp])=>{ const bt=h('button','gexi'); bt.type='button'; const a=h('span','ko',ko); a.lang='ko'; bt.append(a,h('small',null,jp)); bt.onclick=()=>speak(ko,bt); exs.append(bt); }); b.append(exs);
   b.append(h('h4',null,'この課の単語（タップで音声）'));
-  const vs=h('div','gvoc'); u.words.forEach(w=>{ const bt=h('button','gw'); bt.type='button'; const a=h('b',null,w.k); a.lang='ko'; bt.append(a,h('small',null,w.m)); bt.onclick=()=>speak(w.k,bt); vs.append(bt); }); b.append(vs);
+  const vs=h('div','gvoc'); u.words.forEach(w=>{ const bt=h('button','gw'); bt.type='button'; const a=h('b',null,w.k); a.lang='ko'; const sm=h('small',null,w.m); const hj=HJ[w.k]; if(hj&&hj!==w.m) sm.append(h('i','hj',hj)); bt.append(a,sm); bt.onclick=()=>speak(w.k,bt); vs.append(bt); }); b.append(vs);
   b.append(makeQuiz(G0+k));
   return b;
 }
@@ -1156,14 +1336,46 @@ GRAMMAR.forEach((u,k)=>{
   d.addEventListener('toggle',()=>{ if(d.open && !d.dataset.r){ d.dataset.r='1'; d.append(renderUnit(k)); } });
   gunits.append(d);
 });
+const KAKO_URL='https://www.topik.go.kr/TWSTDY/TWSTDY0080.do';
+function extraCard(id,no,title,sub,after,build){
+  const d=h('details','gu gm'); d.id=id; const s=h('summary'); const tt=h('span','gtt'); tt.append(h('b',null,title),h('small',null,sub));
+  s.append(h('span','gno',no),tt,h('span','gst')); d.append(s);
+  s.addEventListener('click',e=>{ if(d.classList.contains('glocked')) e.preventDefault(); });
+  d.addEventListener('toggle',()=>{ if(d.open && !d.dataset.r){ d.dataset.r='1'; const b=h('div','gbody'); build(b); d.append(b); } });
+  after.after(d); return d;
+}
+function pts(b,arr){ const ul=h('ul','gpts'); arr.forEach(t=>ul.append(h('li',null,t))); b.append(ul); }
+const MOCK_PTS={
+  1:['第10課までの文法と単語で、TOPIK I の1級（200点中80点以上）をねらえます。ここで本番と同じ形式の問題を試してみましょう。','本番は 聞き取り30問（40分）＋読解40問（60分）で、すべて4択です。書く問題・話す問題はありません。このミニ模試はそれぞれ10問です。','指示文は本番と同じ韓国語で出ます。形に慣れておくと、本番で指示文を読む時間を節約できます。','第11課へ進むのに、この模試の合格は必要ありません。何度でも挑戦できます。'],
+  2:['全20課おつかれさまでした。2級には200点中140点以上（7割）が必要です。','2級レベルの問題は、会話や文章が長くなります。選択肢を先に読んでから、音声や本文に進むのがコツです。','合格ラインを超えたら、下の「過去問で仕上げ」に進んでください。']
+};
+[1,2].forEach(lv=>extraCard('m'+lv,'模試',lv+'級 ミニ模試','聞き取り10問・読解10問（本番と同じ形式）',document.getElementById('g'+(lv===1?10:NG)),b=>{ pts(b,MOCK_PTS[lv]); MOCKS.forEach((m,i)=>{ if(m.lv===lv) b.append(makeQuiz(M0+i)); }); }));
+extraCard('kako','仕上げ','過去問で仕上げ','기출문제（公式サイトで無料公開）',document.getElementById('m2'),b=>{
+  pts(b,['TOPIKを主催する韓国の国立国際教育院が、過去の試験問題を公式サイトで無料公開しています。TOPIK I は第83回・第91回・第96回・第102回などがあり、音声つきで、そのまま画面上で解けます。',
+    '一覧の中から「TOPIK Ⅰ 듣기（聞き取り）」と「TOPIK Ⅰ 읽기（読解）」を選び、「문제 풀기（問題を解く）」を押します。',
+    '時間を計って解きましょう。聞き取り40分、読解60分です。',
+    '採点は 聞き取り100点＋読解100点。合計80点以上で1級、140点以上で2級です。',
+    '間違えた問題は、知らなかった単語を単語帳で調べて「今日の復習」で覚え直します。聞き取りは、同じ音声をもう一度聞いて確認します。',
+    '2級をねらう人は、3回分を解いて140点を安定して超えることを目安にしてください。']);
+  const a=h('a','btn','公式サイトの過去問ページを開く'); a.href=KAKO_URL; a.target='_blank'; a.rel='noopener'; a.style.cssText='display:inline-flex;align-items:center;text-decoration:none';
+  const r=h('div','row'); r.append(a); b.append(r);
+  b.append(h('p','qdesc','※ サイトは韓国語です。右上の言語メニューで English などに切り替えられます。'));
+});
 function openUnit(k){ const d=document.getElementById('g'+(k+1)); if(!d||d.classList.contains('glocked')) return; d.open=true; setTimeout(()=>d.scrollIntoView({behavior:'smooth',block:'start'}),80); }
 function updateUnits(){
   GRAMMAR.forEach((u,k)=>{ const si=G0+k, d=document.getElementById('g'+(k+1)), st=d.querySelector('.gst'); const open=isOpen(si), pass=!!prog.passed[si], best=prog.best[si];
     d.classList.toggle('glocked',!open); d.classList.toggle('gdone',pass); if(!open) d.open=false;
     if(pass) st.textContent='✓ 合格'; else if(!open) st.innerHTML=LOCK_SVG; else st.textContent=best!=null?`${best} / ${QN}`:'学習する'; });
+  [1,2].forEach(lv=>{ const d=document.getElementById('m'+lv); if(!d) return; const ids=[]; MOCKS.forEach((m,i)=>{ if(m.lv===lv) ids.push(M0+i); });
+    const open=isOpen(ids[0]), done=ids.every(passedSi), st=d.querySelector('.gst');
+    d.classList.toggle('glocked',!open); d.classList.toggle('gdone',done); if(!open) d.open=false;
+    if(done) st.textContent='✓ 達成'; else if(!open) st.innerHTML=LOCK_SVG; else st.textContent='挑戦する'; });
+  { const st=document.querySelector('#kako .gst'); if(st) st.textContent='読む'; }
   const n=gPassed(); $('#gprogText').textContent=`${n} / ${NG} 課 合格`; $('#gprogBar').style.width=(n/NG*100)+'%';
 }
 function openCurrent(){ if(!isOpen(G0)||gunits.querySelector('details[open]')) return; for(let k=0;k<NG;k++){ if(!prog.passed[G0+k]){ const d=document.getElementById('g'+(k+1)); if(!d.classList.contains('glocked')) d.open=true; return; } } }
+
+$('#reviewSlot').append(makeQuiz(-1));
 
 /* wrap each section: body + lock panel (+ quiz) */
 const SECS=[['vowels',0,null],['consonants',1,0],['compound',2,1],['batchim',3,2],['grammar',null,3],['topik',4,3]]; /* id, own quiz index, prerequisite index */
@@ -1199,7 +1411,7 @@ teacherBtn.onclick=()=>{ teacherMode=!teacherMode; lsSet('hangul-teacher',teache
 const RESET_LABEL='この端末の記録をリセット';
 const resetBtn=h('button','btn ghost sm',RESET_LABEL); resetBtn.type='button'; let armed=false;
 resetBtn.onclick=()=>{ if(!nick) return; if(!armed){ armed=true; resetBtn.textContent=`「${nick}」の記録を消しますか？もう一度押してください`; setTimeout(()=>{ armed=false; resetBtn.textContent=RESET_LABEL; },4000); return; }
-  prog=emptyProg(); known=new Set(); saveProg(); armed=false; resetBtn.textContent='リセットしました'; refreshAll(); };
+  prog=emptyProg(); known=new Set(); rev={w:{},day:0,streak:0}; saveProg(); armed=false; resetBtn.textContent='リセットしました'; refreshAll(); };
 ctl.append(teacherBtn,resetBtn); document.querySelector('footer').append(ctl);
 
 /* ---------- nickname & saving ---------- */
@@ -1209,8 +1421,8 @@ function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
 function parseJ(s,d){ try{ return s?JSON.parse(s):d; }catch(e){ return d; } }
 let nick='', teacherMode=lsGet('hangul-teacher')==='1', isTeacher=false;
 
-function loadLocal(n){ const p=parseJ(lsGet('hangul-progress:'+n),{}); prog={passed:p.passed||{},best:p.best||{}}; known=new Set(parseJ(lsGet('topik1-known:'+n),[])); }
-function persist(){ if(!nick) return; lsSet('hangul-progress:'+nick,JSON.stringify(prog)); lsSet('topik1-known:'+nick,JSON.stringify([...known])); updateNickUI(); schedulePush(); }
+function loadLocal(n){ const p=parseJ(lsGet('hangul-progress:'+n),{}); prog={passed:p.passed||{},best:p.best||{}}; known=new Set(parseJ(lsGet('topik1-known:'+n),[])); const r=parseJ(lsGet('hangul-rev:'+n),{}); rev={w:r.w||{},day:r.day||0,streak:r.streak||0}; }
+function persist(){ if(!nick) return; lsSet('hangul-progress:'+nick,JSON.stringify(prog)); lsSet('topik1-known:'+nick,JSON.stringify([...known])); lsSet('hangul-rev:'+nick,JSON.stringify(rev)); updateNickUI(); schedulePush(); }
 
 /* server save/load (Google Apps Script). Works on the GitHub site; claude.ai blocks outside requests, so there the record stays on the device. */
 const API_URL='https://script.google.com/macros/s/AKfycbwdfIFYJmP8s0oLIMpJgS_Yqj6xfXLIJvt0-M0QIqz02f62ryWROU9_xiLDXyRIOoqX1w/exec';
